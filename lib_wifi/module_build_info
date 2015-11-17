@@ -1,0 +1,49 @@
+VERSION = 0.0.1
+
+# lib_xtcp must be built with LWIP support when using Broadcom WICED WiFi
+LWIP_XTCP=1
+
+DEPENDENT_MODULES = lib_xtcp(>=5.0.0) lib_spi(>=3.0.1) lib_gpio(>=1.0.0) lib_xassert(>=2.0.0) lib_logging(>=2.0.0)
+
+WICED_SDK_VERSION ?= 3.3.1
+WICED_BUS ?= SPI
+WICED_WLAN_CHIP ?= 43362
+WICED_WLAN_CHIP_REVISION ?= A2
+
+INCLUDE_DIRS = api \
+  src \
+  src/broadcom_wiced \
+  src/broadcom_wiced/network \
+  src/broadcom_wiced/platform \
+  src/broadcom_wiced/rtos \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/include \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/libraries/utilities/TLV \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/include \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/include/network \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/include/platform \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/include/RTOS \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal/bus_protocols \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal/bus_protocols/$(WICED_BUS) \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal/chips/$(WICED_WLAN_CHIP)$(WICED_WLAN_CHIP_REVISION)
+
+SOURCE_DIRS = src \
+  src/broadcom_wiced \
+  src/broadcom_wiced/network \
+  src/broadcom_wiced/platform \
+  src/broadcom_wiced/platform/$(WICED_BUS) \
+  src/broadcom_wiced/rtos \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/include \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/libraries/utilities/TLV \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal/bus_protocols \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal/bus_protocols/$(WICED_BUS) \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/internal/chips/$(WICED_WLAN_CHIP)$(WICED_WLAN_CHIP_REVISION)
+
+EXCLUDE_FILES = wwd_thread.c
+
+MODULE_XCC_C_FLAGS = $(XCC_C_FLAGS) -DALWAYS_INLINE=""
+MODULE_XCC_XC_FLAGS = $(XCC_XC_FLAGS) -Wno-unknown-pragmas
+
+# NOTE: Not setting -DWWD_DIRECT_RESOURCES in MODULE_XCC_C_FLAGS
