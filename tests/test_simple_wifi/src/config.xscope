@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xSCOPEconfig enabled="false" ioMode="basic">
+    <Probe name="TLS keys" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="PCM buf exchange" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="MP3 Decode start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/> 
+    <Probe name="MP3 decode stop" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="MP3 bytes left" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="SSL read start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="SSL read stop" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="MP3 data out" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="XTCP recv start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="XTCP recv stop" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="LWIP event recv start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="LWIP event recv stop" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="TCP timer" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="MII RX" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="SSL read record" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="Audio sample" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+    <Probe name="Audio index" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="MP3 offset" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+    <Probe name="Rdptr" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="bytesleft" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+    <Probe name="bytes consumed" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+    <Probe name="max level" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="Get mic samples" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="SSL write" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="TCP send buf" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
+    <Probe name="Speech sample" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+    <Probe name="Level window" type="CONTINUOUS" datatype="INT" units="Value" enabled="false"/>
+</xSCOPEconfig>
