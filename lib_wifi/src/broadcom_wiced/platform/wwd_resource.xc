@@ -112,14 +112,12 @@ wwd_result_t host_platform_resource_read_indirect(wwd_resource_t resource,
         // TODO: handle error
       }
 
-      // If the end of the file has been reached, it can now be closed
-      if ((offset + size_out) == file_size) {
-        // TODO: fs_result = i_fs_global.close();
-        if (fs_result != FS_RES_OK) {
-          // TODO: handle error
-        }
-        file_opened = 0;
-      }
+      /* If the end of the file has been reached (i.e. if (
+       * (offset + size_out) == file_size)), it could now be closed and
+       * 'file_opened' set back to zero.
+       * However there is no need (or method) to close files when using the
+       * fs_basic_if interface, so there is nothing more to do.
+       */
     }
     return WWD_SUCCESS;
   }
