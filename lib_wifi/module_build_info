@@ -3,7 +3,7 @@ VERSION = 0.0.1
 # lib_xtcp must be built with LWIP support when using Broadcom WICED WiFi
 LWIP_XTCP=1
 
-DEPENDENT_MODULES = lib_xtcp(>=5.0.0) lib_spi(>=3.0.1) lib_gpio(>=1.0.0) lib_xassert(>=2.0.0) lib_logging(>=2.0.0)
+DEPENDENT_MODULES = lib_xtcp(>=5.0.0) lib_spi(>=3.0.1) lib_gpio(>=1.0.0) lib_filesystem(>=0.0.1) lib_xassert(>=2.0.0) lib_logging(>=2.0.0)
 
 WICED_SDK_VERSION ?= 3.3.1
 WICED_BUS ?= SPI
