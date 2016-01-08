@@ -1,5 +1,4 @@
-#include "wwd_resource_interface.h"
-#include <flash.h>
+#include "xc_broadcom_wiced_includes.h"
 
 wwd_result_t host_platform_resource_size(wwd_resource_t resource,
                                          uint32_t* size_out) {

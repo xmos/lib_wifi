@@ -14,6 +14,7 @@ extern "C" {
 #include "wwd_bus_interface.h"
 #include "wwd_sdpcm.h"
 #include "wwd_bus_protocol_interface.h"
+#include "wwd_resource_interface.h"
 #ifdef __XC__
 }
 #endif
