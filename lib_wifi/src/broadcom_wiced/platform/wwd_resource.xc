@@ -1,4 +1,7 @@
 #include "xc_broadcom_wiced_includes.h"
+#include "filesystem.h"
+
+extern unsafe client interface fs_basic_if i_fs_global;
 
 wwd_result_t host_platform_resource_size(wwd_resource_t resource,
                                          uint32_t* size_out) {

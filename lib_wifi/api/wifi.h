@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "spi.h"
 #include "gpio.h"
+#include "filesystem.h"
 
 /** Module HAL - similar to smi.h?
  * TODO: document
@@ -102,7 +103,8 @@ void wifi_broadcom_wiced_spi(
     server interface wifi_network_data_if i_data[n_data], size_t n_data,
     client interface spi_master_if i_spi,
     unsigned spi_device_index,
-    client interface input_gpio_if i_irq);
+    client interface input_gpio_if i_irq,
+    client interface fs_basic_if i_fs);
 
 // NOTE: named to allow future SDIO support: wifi_broadcom_wiced_sdio()
 

@@ -23,13 +23,13 @@ GEN_XCC_FLAGS = -O2 -g -save-temps -fxscope -DDEBUG_PRINT_ENABLE=1 -DLWIP_XTCP=1
 XCC_FLAGS = # Using GEN_XCC_FLAGS to allow for XCC_C_FLAGS to tidy lib_xtcp
 XCC_C_FLAGS = $(GEN_XCC_FLAGS) -Wno-ignored-attributes -Wno-typedef-redefinition # TODO: remove these warning supressions - just to tidy up lib_xtcp
 XCC_XC_FLAGS = $(GEN_XCC_FLAGS)
-XCC_MAP_FLAGS = -report
+XCC_MAP_FLAGS = -report -lquadflash
 
 ENABLE_STAGED_BUILD = 1 # TODO: remove this line
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_wifi lib_logging lib_spi lib_gpio
+USED_MODULES = lib_wifi lib_logging lib_spi lib_gpio lib_filesystem
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
