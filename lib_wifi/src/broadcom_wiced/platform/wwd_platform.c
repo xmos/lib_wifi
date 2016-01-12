@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "platform/wwd_platform_interface.h"
 
 wwd_result_t host_platform_init() {

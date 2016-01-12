@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "wwd_buffer_interface.h"
 #include "wwd_network_constants.h"
 #include "wwd_assert.h"

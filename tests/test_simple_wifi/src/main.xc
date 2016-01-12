@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "wifi.h"
 #include <platform.h>
 #include "spi.h"

@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef __xc_broadcom_wiced_includes_h__
 #define __xc_broadcom_wiced_includes_h__
 

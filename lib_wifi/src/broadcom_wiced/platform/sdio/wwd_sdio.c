@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "platform/wwd_bus_interface.h"
 #include "platform/wwd_sdio_interface.h"
 #include "platform_config.h"

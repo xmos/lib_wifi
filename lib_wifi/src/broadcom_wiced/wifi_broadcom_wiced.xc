@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "wifi_broadcom_wiced.h"
 #include "wifi.h"
 #include <stddef.h>

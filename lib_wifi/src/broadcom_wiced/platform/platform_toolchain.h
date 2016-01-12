@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef __wifi_platform_toolchain_h__
 #define __wifi_platform_toolchain_h__
 
