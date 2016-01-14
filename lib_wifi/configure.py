@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
   wiced_dir_name = "WICED-SDK-"+wiced_version
   wiced_src_repo = os.path.join(lib_wifi_lib_dir, "..", "..",
-                                "lib_broadcom_wiced_sdk")
+                                "broadcom_wiced_sdk")
   wiced_src_dir = os.path.join(wiced_src_repo, wiced_dir_name)
   lib_wifi_sdk_dir = os.path.join(lib_wifi_lib_dir,  "src",
                                   "broadcom_wiced", "sdk")
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print "Removing existing copy of WICED SDK..."
     shutil.rmtree(wiced_dst_dir)
 
-  # Copy SDK dir from lib_broadcom_wiced_sdk to patch location
+  # Copy SDK dir from broadcom_wiced_sdk to patch location
   print "Copying WICED SDK to required location..."
   shutil.copytree(wiced_src_dir, wiced_dst_dir)
 
