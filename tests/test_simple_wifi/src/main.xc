@@ -39,9 +39,10 @@ xtcp_ipconfig_t ipconfig = {
 };
 
 void application(client interface wifi_hal_if i_hal,
-         client interface wifi_network_config_if i_conf,
-         client interface wifi_network_data_if i_data) {
+                 client interface wifi_network_config_if i_conf,
+                 client interface wifi_network_data_if i_data) {
   debug_printf("tmp\n");
+  while (1);
 }
 
 void filesystem_tasks(server interface fs_basic_if i_fs[]) {
