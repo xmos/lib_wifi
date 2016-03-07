@@ -47,7 +47,8 @@ resource_result_t open_file_if_required(wwd_resource_t resource) {
     fs_result_t result = FS_RES_NOT_OPENED;
 
     if (!file_opened) {
-      result = i_fs_global.open(FIRMWARE_FILENAME);
+      char filename[] = FIRMWARE_FILENAME;
+      result = i_fs_global.open(filename, sizeof(filename));
       if (result != FS_RES_OK) {
         return RESOURCE_FILE_OPEN_FAIL;
       }
@@ -107,8 +108,10 @@ wwd_result_t host_platform_resource_read_indirect(wwd_resource_t resource,
       /* Attempt to read buffer_size bytes from the file into buffer,
        * returning the actual number of bytes read in size_out
        */
-      fs_result = i_fs_global.read((uint8_t *)buffer, buffer_size,
-                                   (size_t *)size_out);
+      size_t local_size_out = *size_out;
+      fs_result = i_fs_global.read((uint8_t *)buffer, buffer_size, buffer_size,
+                                   local_size_out);
+      *size_out = local_size_out;
       if (fs_result != FS_RES_OK) {
         // TODO: handle error
       }
