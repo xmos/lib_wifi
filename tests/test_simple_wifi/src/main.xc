@@ -10,13 +10,13 @@
 #include "debug_print.h"
 
 // These ports are used for the SPI master
-out buffered port:32 p_sclk  = on tile[0]:   XS1_PORT_1I;
-out          port    p_ss[1] = on tile[0]: { XS1_PORT_1J };
-in  buffered port:32 p_miso  = on tile[0]:   XS1_PORT_1K;
-out buffered port:32 p_mosi  = on tile[0]:   XS1_PORT_1L;
+out buffered port:32 p_sclk  = on tile[1]:   XS1_PORT_1N;
+out          port    p_ss[1] = on tile[1]: { XS1_PORT_4E }; // Bit 0
+in  buffered port:32 p_miso  = on tile[1]:   XS1_PORT_1M;
+out buffered port:32 p_mosi  = on tile[1]:   XS1_PORT_1L;
 
 // Input port used for IRQ interrupt line
-in port p_irq = on tile[0]: XS1_PORT_1A;
+in port p_irq = on tile[1]: XS1_PORT_4F;
 
 fl_QSPIPorts qspi_flash_ports = {
   PORT_SQI_CS,
