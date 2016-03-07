@@ -104,7 +104,6 @@ static void wifi_broadcom_wiced_spi_internal(
   }
 }
 
-[[combinable]]
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
@@ -117,6 +116,7 @@ void wifi_broadcom_wiced_spi(
   chan xcore_wwd_ctrl;
 
   par {
+    // TODO: 'combine' wifi_broadcom_wiced_spi_internal and xcore_wwd
     // Start the interface task
     {
       unsafe {
@@ -133,9 +133,5 @@ void wifi_broadcom_wiced_spi(
      * immediately and waits to be initialised.
      */
     xcore_wwd(i_irq, xcore_wwd_ctrl);
-  }
-  // XXX: This while loop is here simply to allow this task to be combinable
-  while (1) {
-    select {}
   }
 }

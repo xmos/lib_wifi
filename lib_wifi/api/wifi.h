@@ -97,7 +97,6 @@ typedef interface wifi_network_data_if {
   // TODO: Add function to notify clients of received packets
 } wifi_network_data_if;
 
-[[combinable]]
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
