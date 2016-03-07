@@ -2,6 +2,8 @@
 #ifndef __wifi_h__
 #define __wifi_h__
 
+#ifdef __XC__
+
 #include <xs1.h>
 #include <stddef.h>
 #include "spi.h"
@@ -116,5 +118,7 @@ void wifi_broadcom_wiced_spi(
     client interface fs_basic_if i_fs);
 
 // NOTE: named to allow future SDIO support: wifi_broadcom_wiced_sdio()
+
+#endif // __XC__
 
 #endif // __wifi_h__
