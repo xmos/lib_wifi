@@ -62,6 +62,143 @@ index f3816a6..927a9de 100644
                                     wiced_scan_result_t**                          result_ptr,
                                     /*@null@*/ void*                               user_data,
                                     wwd_interface_t                                interface );
+diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/SPI/wwd_bus_protocol.c b/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/SPI/wwd_bus_protocol.c
+index b68a261..b12f8d8 100644
+--- a/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/SPI/wwd_bus_protocol.c
++++ b/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/SPI/wwd_bus_protocol.c
+@@ -342,7 +342,7 @@ return_with_error:
+     {
+         /* Read out the first 12 bytes to get the bus credit information */
+         uint8_t temp_buffer[12 + sizeof(wwd_bus_header_t)];
+-        wwd_bus_transfer_bytes( BUS_READ, WLAN_FUNCTION, 0, 12, (wwd_transfer_bytes_packet_t*) temp_buffer );
++        wwd_bus_transfer_bytes_read( WLAN_FUNCTION, 0, 12, (wwd_transfer_bytes_packet_t*) temp_buffer );
+ 
+         /* Abort the transfer to force the packet to be dropped */
+         if ( wiced_gspi_bytes_pending > 12 )
+@@ -522,7 +522,7 @@ wwd_result_t wwd_bus_write_register_value( wwd_bus_function_t function, uint32_t
+     internal_gspi_packet->data[0] = value;
+ 
+     /* Send it off */
+-    return wwd_bus_transfer_bytes( BUS_WRITE, function, address, value_length, internal_gspi_packet );
++    return wwd_bus_transfer_bytes_write( function, address, value_length, internal_gspi_packet );
+ }
+ 
+ /*
+@@ -546,13 +546,44 @@ wwd_result_t wwd_bus_read_backplane_value( uint32_t address, uint8_t register_le
+     return wwd_read_register_value( BACKPLANE_FUNCTION, address & BACKPLANE_ADDRESS_MASK, register_length, value );
+ }
+ 
+-wwd_result_t wwd_bus_transfer_bytes( wwd_bus_transfer_direction_t direction, wwd_bus_function_t function, uint32_t address, uint16_t size, /*@in@*/ /*@out@*/ wwd_transfer_bytes_packet_t* data )
++wwd_result_t wwd_bus_transfer_bytes_read( wwd_bus_function_t function, uint32_t address, uint16_t size, /*@in@*/ /*@out@*/ wwd_transfer_bytes_packet_t* data )
+ {
+     uint32_t* temp;
+     wwd_result_t result;
+     uint16_t newsize;
+ 
+-    data->bus_header.gspi_header = (wwd_bus_gspi_header_t) ( (uint32_t) ( ( wwd_bus_gspi_command_mapping[(int)direction] & 0x1     ) << 31 ) |
++    data->bus_header.gspi_header = (wwd_bus_gspi_header_t) ( (uint32_t) ( ( wwd_bus_gspi_command_mapping[(int)BUS_READ] & 0x1     ) << 31 ) |
++                                                     (uint32_t) ( ( GSPI_INCREMENT_ADDRESS               & 0x1     ) << 30 ) |
++                                                     (uint32_t) ( ( function                             & 0x3     ) << 28 ) |
++                                                     (uint32_t) ( ( address                              & 0x1FFFF ) << 11 ) |
++                                                     (uint32_t) ( ( size                                 & 0x7FF   ) <<  0 ) );
++
++    /* Reshuffle the bits if we're not in 32 bit mode */
++    if ( wwd_bus_gspi_32bit == WICED_FALSE )
++    {
++        /* Note: This typecast should always be valid if the buffer containing the GSpi packet has been correctly declared as 32-bit aligned */
++        temp  = (uint32_t*) data;
++        *temp = H32TO16LE(*temp);
++    }
++
++    /* Round size up to 32-bit alignment */
++    newsize = (uint16_t) ROUND_UP(size, 4);
++
++    /* Send the data */
++    result = host_platform_spi_transfer( BUS_READ, (uint8_t*) data, (uint16_t) ( newsize + sizeof(wwd_bus_gspi_header_t) ) );
++
++    add_log_entry( LOG_RX, function, address, (unsigned long)((function == BACKPLANE_FUNCTION)?size-4:size), (function == BACKPLANE_FUNCTION)?((char*)&data->data)+4:(char*)&data->data );
++
++    return result;
++}
++
++wwd_result_t wwd_bus_transfer_bytes_write( wwd_bus_function_t function, uint32_t address, uint16_t size, /*@in@*/ /*@out@*/ wwd_transfer_bytes_packet_t* data )
++{
++    uint32_t* temp;
++    wwd_result_t result;
++    uint16_t newsize;
++
++    data->bus_header.gspi_header = (wwd_bus_gspi_header_t) ( (uint32_t) ( ( wwd_bus_gspi_command_mapping[(int)BUS_WRITE] & 0x1     ) << 31 ) |
+                                                      (uint32_t) ( ( GSPI_INCREMENT_ADDRESS               & 0x1     ) << 30 ) |
+                                                      (uint32_t) ( ( function                             & 0x3     ) << 28 ) |
+                                                      (uint32_t) ( ( address                              & 0x1FFFF ) << 11 ) |
+@@ -570,7 +601,7 @@ wwd_result_t wwd_bus_transfer_bytes( wwd_bus_transfer_direction_t direction, wwd
+     newsize = (uint16_t) ROUND_UP(size, 4);
+ 
+     /* Ensure we are clear to write */
+-    if ( ( direction == BUS_WRITE ) && ( function == WLAN_FUNCTION ) )
++    if ( function == WLAN_FUNCTION )
+     {
+         uint32_t wwd_bus_gspi_status;
+         uint32_t loop_count = 0;
+@@ -606,12 +637,7 @@ wwd_result_t wwd_bus_transfer_bytes( wwd_bus_transfer_direction_t direction, wwd
+     }
+ 
+     /* Send the data */
+-    result = host_platform_spi_transfer( direction, (uint8_t*) data, (uint16_t) ( newsize + sizeof(wwd_bus_gspi_header_t) ) );
+-
+-    if ( direction == BUS_READ )
+-    {
+-        add_log_entry( LOG_RX, function, address, (unsigned long)((function == BACKPLANE_FUNCTION)?size-4:size), (function == BACKPLANE_FUNCTION)?((char*)&data->data)+4:(char*)&data->data );
+-    }
++    result = host_platform_spi_transfer( BUS_WRITE, (uint8_t*) data, (uint16_t) ( newsize + sizeof(wwd_bus_gspi_header_t) ) );
+ 
+     return result;
+ }
+@@ -752,7 +778,7 @@ static wwd_result_t wwd_read_register_value( wwd_bus_function_t function, uint32
+         data_ptr = pkt->data;
+     }
+     *data_ptr = 0;
+-    result = wwd_bus_transfer_bytes( BUS_READ, function, address, (uint16_t)(value_length + padding), (wwd_transfer_bytes_packet_t*) gspi_internal_buffer );
++    result = wwd_bus_transfer_bytes_read( function, address, (uint16_t)(value_length + padding), (wwd_transfer_bytes_packet_t*) gspi_internal_buffer );
+ 
+     memcpy( value, data_ptr, value_length );
+ 
+diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_common.c b/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_common.c
+index bd62466..d8c6ada 100644
+--- a/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_common.c
++++ b/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_common.c
+@@ -101,7 +101,7 @@ static wwd_result_t download_resource( wwd_resource_t resource, uint32_t address
+         /* Round up the size of the chunk */
+         transfer_size = (uint16_t) ROUND_UP( transfer_size, WWD_BUS_ROUND_UP_ALIGNMENT );
+ 
+-        if ( WWD_SUCCESS != ( result = wwd_bus_transfer_bytes( BUS_WRITE, BACKPLANE_FUNCTION, address & BACKPLANE_ADDRESS_MASK, transfer_size, (wwd_transfer_bytes_packet_t*) image ) ) )
++        if ( WWD_SUCCESS != ( result = wwd_bus_transfer_bytes_write( BACKPLANE_FUNCTION, address & BACKPLANE_ADDRESS_MASK, transfer_size, (wwd_transfer_bytes_packet_t*) image ) ) )
+         {
+             return result;
+         }
+@@ -170,7 +170,7 @@ static wwd_result_t download_resource( wwd_resource_t resource, uint32_t address
+                 host_buffer_release( buffer, WWD_NETWORK_TX );
+                 return result;
+             }
+-            result = wwd_bus_transfer_bytes( BUS_WRITE, BACKPLANE_FUNCTION, ( address & BACKPLANE_ADDRESS_MASK ), transfer_size, (wwd_transfer_bytes_packet_t*) ( packet + sizeof(wwd_buffer_queue_ptr_t)) );
++            result = wwd_bus_transfer_bytes_write( BACKPLANE_FUNCTION, ( address & BACKPLANE_ADDRESS_MASK ), transfer_size, (wwd_transfer_bytes_packet_t*) ( packet + sizeof(wwd_buffer_queue_ptr_t)) );
+             if ( result != WWD_SUCCESS )
+             {
+                 host_buffer_release( buffer, WWD_NETWORK_TX );
+diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_protocol_interface.h b/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_protocol_interface.h
+index ff29e32..bf2788d 100644
+--- a/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_protocol_interface.h
++++ b/WICED-SDK-3.3.1/WICED/WWD/internal/bus_protocols/wwd_bus_protocol_interface.h
+@@ -64,7 +64,8 @@ extern wwd_result_t wwd_bus_write_register_value       ( wwd_bus_function_t func
+ 
+ /* Device data transfer functions */
+ extern wwd_result_t wwd_bus_send_buffer                ( wiced_buffer_t buffer );
+-extern wwd_result_t wwd_bus_transfer_bytes             ( wwd_bus_transfer_direction_t direction, wwd_bus_function_t function, uint32_t address, uint16_t size, /*@in@*/ /*@out@*/ wwd_transfer_bytes_packet_t* data );
++extern wwd_result_t wwd_bus_transfer_bytes_read        ( wwd_bus_function_t function, uint32_t address, uint16_t size, /*@in@*/ /*@out@*/ wwd_transfer_bytes_packet_t* data );
++extern wwd_result_t wwd_bus_transfer_bytes_write       ( wwd_bus_function_t function, uint32_t address, uint16_t size, /*@in@*/ /*@out@*/ wwd_transfer_bytes_packet_t* data );
+ 
+ /* Frame transfer function */
+ extern wwd_result_t wwd_bus_read_frame( /*@out@*/  wiced_buffer_t* buffer );
 diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/chips/43362A2/wwd_ap.c b/WICED-SDK-3.3.1/WICED/WWD/internal/chips/43362A2/wwd_ap.c
 index 3e0b946..8a98001 100644
 --- a/WICED-SDK-3.3.1/WICED/WWD/internal/chips/43362A2/wwd_ap.c
