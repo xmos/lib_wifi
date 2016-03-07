@@ -21,6 +21,14 @@ static unsigned wifi_bcm_wiced_spi_device_index;
 unsafe chanend xcore_wwd_ctrl_external;
 unsafe client interface fs_basic_if i_fs_global;
 
+unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
+  i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 2, line_state);
+}
+
+unsafe void xcore_wiced_drive_reset_line(uint32_t line_state) {
+  i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 1, line_state);
+}
+
 unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
                                      uint8_t * unsafe buffer,
                                      uint16_t buffer_length) {

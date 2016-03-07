@@ -1,5 +1,6 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "platform/wwd_platform_interface.h"
+#include "wifi_broadcom_wiced.h"
 
 wwd_result_t host_platform_init() {
   // TODO: implement
@@ -12,15 +13,17 @@ wwd_result_t host_platform_deinit() {
 }
 
 void host_platform_reset_wifi(wiced_bool_t reset_asserted) {
+  // If reset asserted, drive the WLAN_RST_N low
   if (reset_asserted == WICED_TRUE) {
-    host_platform_power_wifi(WICED_FALSE);
+    xcore_wiced_drive_reset_line(0);
   } else {
-    host_platform_power_wifi(WICED_TRUE);
+    xcore_wiced_drive_reset_line(1);
   }
 }
 
 void host_platform_power_wifi(wiced_bool_t power_enabled) {
-  // TODO: implement
+  // If power enabled drive WLAN_3V3_EN high
+  xcore_wiced_drive_power_line(power_enabled);
 }
 
 wwd_result_t host_platform_init_wlan_powersave_clock() {

@@ -15,6 +15,12 @@ typedef enum {
 } xcore_wwd_control_signal_t;
 
 /** TODO: document (brief) */
+unsafe void xcore_wiced_drive_power_line (uint32_t line_state);
+
+/** TODO: document (brief) */
+unsafe void xcore_wiced_drive_reset_line(uint32_t line_state);
+
+/** TODO: document (brief) */
 unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
                                      uint8_t * unsafe buffer,
                                      uint16_t buffer_length);
