@@ -38,7 +38,7 @@ unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
   if (BUS_READ == direction) {
     // Reading from the bus TO buffer, send zeros as data
     for (int i = 0; i < buffer_length; i++) {
-      buffer[i] = i_wifi_bcm_wiced_spi.transfer8(0);
+      buffer[i] = i_wifi_bcm_wiced_spi.transfer8(buffer[i]);
     }
   } else { // Must be BUS_WRITE
     // Writing to the bus FROM buffer, ignore received data
