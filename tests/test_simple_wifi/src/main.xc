@@ -9,6 +9,8 @@
 
 #include "debug_print.h"
 
+out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
+
 // These ports are used for the SPI master
 out buffered port:32 p_sclk  = on tile[1]:   XS1_PORT_1N;
 out          port    p_ss[1] = on tile[1]: { XS1_PORT_4E }; // Bit 0
@@ -29,6 +31,25 @@ void application(client interface wifi_hal_if i_hal,
          client interface wifi_network_config_if i_conf,
          client interface wifi_network_data_if i_data) {
   debug_printf("tmp\n");
+void sleep_clock_gen() {
+  // 32.768kHz to bit 3 of p_lpo_sleep_clk
+  timer t;
+  unsigned delay;
+  unsigned clk_signal = 0x8; // Bit 3
+  t :> delay;
+  delay += 1526;
+  unsigned counts[] = {1526, 1526, 1526, 1525, 1526, 1526, 1525};
+  unsigned i = 0;
+  while (1) {
+    select {
+      case t when timerafter(delay) :> void:
+        p_lpo_sleep_clk <: clk_signal;
+        clk_signal = (~clk_signal) & 0x8;
+        delay += counts[i];
+        i = (i+1) % 6;
+        break;
+    }
+  }
 }
 
 int main(void) {
@@ -51,6 +72,7 @@ int main(void) {
     input_gpio_with_events(i_inputs, 1, p_irq, null);
     qspi_flash_fs_media(i_media, qspi_flash_ports, qspi_spec, 512);
     filesystem_basic(i_fs, 1, FS_FORMAT_FAT12, i_media);
+    // on tile[0]:                sleep_clock_gen();
   }
 
   return 0;
