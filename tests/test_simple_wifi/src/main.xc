@@ -6,6 +6,8 @@
 #include <quadflash.h>
 #include "qspi_flash_storage_media.h"
 #include "filesystem.h"
+#include "xtcp.h"
+#include <xs1.h>
 
 #include "debug_print.h"
 
@@ -25,6 +27,15 @@ fl_QSPIPorts qspi_flash_ports = {
   PORT_SQI_SCLK,
   PORT_SQI_SIO,
   on tile[0]: XS1_CLKBLK_1
+};
+
+/* IP Config - change this to suit your network
+ * Leave with all 0 values to use DHCP/AutoIP
+ */
+xtcp_ipconfig_t ipconfig = {
+                            { 0, 0, 0, 0 }, // ip address (e.g. 192,168,0,2)
+                            { 0, 0, 0, 0 }, // netmask (e.g. 255,255,255,0)
+                            { 0, 0, 0, 0 }  // gateway (e.g. 192,168,0,1)
 };
 
 void application(client interface wifi_hal_if i_hal,
@@ -53,25 +64,28 @@ void sleep_clock_gen() {
 }
 
 int main(void) {
-  interface wifi_hal_if i_hal[1];
-  interface wifi_network_config_if i_conf[1];
-  interface wifi_network_data_if i_data[1];
+  interface wifi_hal_if i_hal[2];
+  interface wifi_network_config_if i_conf[2];
+  interface wifi_network_data_if i_data[2];
   interface spi_master_if i_spi[1];
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
   interface fs_storage_media_if i_media;
   fl_QuadDeviceSpec qspi_spec = FL_QUADDEVICE_SPANSION_S25FL116K;
 
+  chan c_xtcp[1];
+
   par {
-    wifi_broadcom_wiced_spi(i_hal, 1, i_conf, 1, i_data, 1,
-                            i_spi[0], 0,
-                            i_inputs[0],
-                            i_fs[0]);
     application(i_hal[0], i_conf[0], i_data[0]);
     spi_master(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
     input_gpio_with_events(i_inputs, 1, p_irq, null);
     qspi_flash_fs_media(i_media, qspi_flash_ports, qspi_spec, 512);
     filesystem_basic(i_fs, 1, FS_FORMAT_FAT12, i_media);
+    on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, 2,
+                                                       i_data, 2, i_spi[0], 0,
+                                                       i_inputs[0], i_fs[0]);
+    on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1], i_conf[1],
+                                              i_data[1], ipconfig);
     // on tile[0]:                sleep_clock_gen();
   }
 
