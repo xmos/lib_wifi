@@ -42,6 +42,19 @@ void application(client interface wifi_hal_if i_hal,
          client interface wifi_network_config_if i_conf,
          client interface wifi_network_data_if i_data) {
   debug_printf("tmp\n");
+}
+
+void filesystem_tasks(server interface fs_basic_if i_fs[]) {
+  interface fs_storage_media_if i_media;
+  fl_QuadDeviceSpec qspi_spec = FL_QUADDEVICE_ISSI_IS25LQ016B;
+
+  par {
+    [[distribute]] qspi_flash_fs_media(i_media, qspi_flash_ports,
+                                       qspi_spec, 512);
+    filesystem_basic(i_fs, 1, FS_FORMAT_FAT12, i_media);
+  }
+}
+
 void sleep_clock_gen() {
   // 32.768kHz to bit 3 of p_lpo_sleep_clk
   timer t;
@@ -70,23 +83,21 @@ int main(void) {
   interface spi_master_if i_spi[1];
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
-  interface fs_storage_media_if i_media;
-  fl_QuadDeviceSpec qspi_spec = FL_QUADDEVICE_SPANSION_S25FL116K;
 
   chan c_xtcp[1];
 
   par {
-    application(i_hal[0], i_conf[0], i_data[0]);
-    spi_master(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1, null);
-    input_gpio_with_events(i_inputs, 1, p_irq, null);
-    qspi_flash_fs_media(i_media, qspi_flash_ports, qspi_spec, 512);
-    filesystem_basic(i_fs, 1, FS_FORMAT_FAT12, i_media);
     on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, 2,
                                                        i_data, 2, i_spi[0], 0,
                                                        i_inputs[0], i_fs[0]);
+    on tile[1]:                application(i_hal[0], i_conf[0], i_data[0]);
+    on tile[1]: [[distribute]] spi_master(i_spi, 1, p_sclk, p_mosi, p_miso,
+                                          p_ss, 1, null);
+    on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1], i_conf[1],
                                               i_data[1], ipconfig);
     // on tile[0]:                sleep_clock_gen();
+    on tile[0]:                filesystem_tasks(i_fs);
   }
 
   return 0;
