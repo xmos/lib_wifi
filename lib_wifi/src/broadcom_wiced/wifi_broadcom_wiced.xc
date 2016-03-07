@@ -104,6 +104,38 @@ static void wifi_broadcom_wiced_spi_internal(
 
       case i_hal[int i].set_channel():
         break;
+
+      // WiFi network configuration interface
+      case i_conf[int i].get_mac_address(uint8_t mac_address[6]) -> wifi_res_t result:
+        // TODO: implement
+        for (int i = 0; i < 6; i++) { // TODO: remove
+          mac_address[i] = i;
+        }
+        result = WIFI_SUCCESS;
+        break;
+
+      case i_conf[int i].set_mac_address():
+        break;
+
+      case i_conf[int i].get_link_state():
+        break;
+
+      case i_conf[int i].set_link_state():
+        break;
+
+      case i_conf[int i].set_networking_mode():
+        break;
+
+      case i_conf[int i].scan_for_networks():
+        break;
+
+      case i_conf[int i].join_network(unsigned ssid):
+        break;
+
+      case i_conf[int i].leave_network(unsigned ssid):
+        break;
+
+      // TODO: WiFi network data interface
     }
   }
 }

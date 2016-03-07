@@ -8,6 +8,12 @@
 #include "gpio.h"
 #include "filesystem.h"
 
+/** TODO: document */
+typedef enum {
+  WIFI_SUCCESS, ///< TODO: document
+  WIFI_ERROR    ///< TODO: document
+} wifi_res_t;
+
 /** Module HAL - similar to smi.h?
  * TODO: document
  */
@@ -54,7 +60,7 @@ typedef interface wifi_hal_if {
 typedef interface wifi_network_config_if {
 
   /** TODO: document */
-  void get_mac_address();
+  wifi_res_t get_mac_address(uint8_t mac_address[6]);
 
   /** TODO: document */
   void set_mac_address();
