@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xSCOPEconfig enabled="false" ioMode="basic">
+<xSCOPEconfig enabled="true" ioMode="basic">
     <Probe name="TLS keys" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
     <Probe name="PCM buf exchange" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
-    <Probe name="MP3 Decode start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/> 
+    <Probe name="MP3 Decode start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
     <Probe name="MP3 decode stop" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
     <Probe name="MP3 bytes left" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
     <Probe name="SSL read start" type="CONTINUOUS" datatype="UINT" units="Value" enabled="false"/>
