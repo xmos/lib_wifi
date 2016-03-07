@@ -14,6 +14,9 @@
 typedef interface wifi_hal_if {
 
   /** TODO: document */
+  void init_radio();
+
+  /** TODO: document */
   void get_hardware_status();
 
   /** TODO: document */

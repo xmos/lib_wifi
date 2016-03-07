@@ -63,14 +63,18 @@ static void wifi_broadcom_wiced_spi_internal(
   }
   wifi_bcm_wiced_spi_device_index = spi_device_index;
 
-  // Initialise driver and hardware
-  debug_printf("Initialising WWD...\n");
-  wwd_result_t result = wwd_management_init(WICED_COUNTRY_UNITED_KINGDOM, NULL);
-  assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
-  debug_printf("WWD initialisation complete\n");
-
   while (1) {
     select {
+      // WiFi HAL interface
+      case i_hal[int i].init_radio():
+        // Initialise driver and hardware
+        debug_printf("Initialising WWD...\n");
+        wwd_result_t result = wwd_management_init(WICED_COUNTRY_UNITED_KINGDOM,
+                                                  NULL);
+        assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
+        debug_printf("WWD initialisation complete\n");
+        break;
+
       case i_hal[int i].get_hardware_status():
         break;
 
