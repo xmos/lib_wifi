@@ -39,8 +39,7 @@ xtcp_ipconfig_t ipconfig = {
 };
 
 void application(client interface wifi_hal_if i_hal,
-                 client interface wifi_network_config_if i_conf,
-                 client interface wifi_network_data_if i_data) {
+                 client interface wifi_network_config_if i_conf) {
   debug_printf("tmp\n");
   while (1);
 }
@@ -80,7 +79,7 @@ void sleep_clock_gen() {
 int main(void) {
   interface wifi_hal_if i_hal[2];
   interface wifi_network_config_if i_conf[2];
-  interface wifi_network_data_if i_data[2];
+  interface wifi_network_data_if i_data;
   interface spi_master_if i_spi[1];
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
@@ -89,14 +88,14 @@ int main(void) {
 
   par {
     on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, 2,
-                                                       i_data, 2, i_spi[0], 0,
+                                                       i_data, i_spi[0], 0,
                                                        i_inputs[0], i_fs[0]);
-    on tile[1]:                application(i_hal[0], i_conf[0], i_data[0]);
+    on tile[1]:                application(i_hal[0], i_conf[0]);
     on tile[1]: [[distribute]] spi_master(i_spi, 1, p_sclk, p_mosi, p_miso,
                                           p_ss, 1, null);
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1], i_conf[1],
-                                              i_data[1], ipconfig);
+                                              i_data, ipconfig);
     // on tile[0]:                sleep_clock_gen();
     on tile[0]:                filesystem_tasks(i_fs);
   }

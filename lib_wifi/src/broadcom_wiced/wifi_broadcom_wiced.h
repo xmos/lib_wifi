@@ -31,6 +31,8 @@ void xcore_wwd_send_control_signal(xcore_wwd_control_signal_t signal_to_send);
 /** TODO: document (brief) */
 xcore_wwd_control_signal_t xcore_wwd_receive_control_signal();
 
+void xcore_wiced_send_pbuf_to_internal(wiced_buffer_t p);
+
 #if __XC__
 
 /** TODO: document (brief) */

@@ -19,6 +19,7 @@ static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsigned wifi_bcm_wiced_spi_device_index;
 
 unsafe chanend xcore_wwd_ctrl_external;
+unsafe chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
@@ -49,20 +50,63 @@ unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
   i_wifi_bcm_wiced_spi.end_transaction(wifi_bcm_wiced_spi_ss_deassert_ms);
 }
 
+void xcore_wiced_send_pbuf_to_internal(pbuf_p p) {
+  unsafe {
+    xcore_wwd_pbuf_external <: p;
+  }
+}
+
+#define NUM_BUFFERS 10
+
+/*
+ * A structure for storing pbuf pointers. It is empty when head == tail.
+ */
+typedef struct {
+  pbuf_p buffers[NUM_BUFFERS];
+  unsigned head;
+  unsigned tail;
+} buffers_t;
+
+static void buffers_init(buffers_t &buffers) {
+  buffers.head = 0;
+  buffers.tail = 0;
+}
+
+static unsafe pbuf_p buffers_take(buffers_t &buffers) {
+  xassert(buffers.head != buffers.tail);
+  return buffers.buffers[buffers.head];
+}
+
+static unsafe pbuf_p buffers_put(buffers_t &buffers, pbuf_p p) {
+  buffers.buffers[buffers.tail] = p;
+  buffers.tail += 1;
+  if (buffers.tail == NUM_BUFFERS) {
+    buffers.tail = 0;
+  }
+  xassert(buffers.head != buffers.tail);
+}
+
+static int buffers_is_empty(buffers_t &buffers){
+  return (buffers.head == buffers.tail);
+}
+
+// Needs to be unsafe due to input of pbuf_p from streaming channel
 [[combinable]]
-static void wifi_broadcom_wiced_spi_internal(
+static unsafe void wifi_broadcom_wiced_spi_internal(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface wifi_network_data_if i_data[n_data], size_t n_data,
+    server interface wifi_network_data_if i_data,
     client interface spi_master_if i_spi,
-    unsigned spi_device_index) {
+    unsigned spi_device_index,
+    streaming chanend c_xcore_wwd_pbuf) {
 
   // Save the SPI bus details for use from wwd_spi functions
-  unsafe {
-    i_wifi_bcm_wiced_spi = i_spi;
-  }
+  i_wifi_bcm_wiced_spi = i_spi;
   wifi_bcm_wiced_spi_device_index = spi_device_index;
 
+  buffers_t rx_buffers, tx_buffers;
+  buffers_init(rx_buffers);
+  buffers_init(tx_buffers);
   while (1) {
     select {
       // WiFi HAL interface
@@ -117,10 +161,11 @@ static void wifi_broadcom_wiced_spi_internal(
       case i_conf[int i].set_mac_address():
         break;
 
-      case i_conf[int i].get_link_state():
+      case i_conf[int i].get_link_state() -> ethernet_link_state_t state:
+        state = ETHERNET_LINK_UP;
         break;
 
-      case i_conf[int i].set_link_state():
+      case i_conf[int i].set_link_state(ethernet_link_state_t state):
         break;
 
       case i_conf[int i].set_networking_mode():
@@ -136,6 +181,22 @@ static void wifi_broadcom_wiced_spi_internal(
         break;
 
       // TODO: WiFi network data interface
+      case i_data.receive_packet() -> pbuf_p p:
+        p = buffers_take(rx_buffers);
+        if (!buffers_is_empty(rx_buffers)) {
+          // If there are still packets to be consumed then notify client again
+          i_data.packet_ready();
+        }
+        break;
+
+      case i_data.send_packet(pbuf_p p):
+        buffers_put(tx_buffers, p);
+        break;
+
+      case c_xcore_wwd_pbuf :> pbuf_p p:
+        buffers_put(rx_buffers, p);
+        i_data.packet_ready();
+        break;
     }
   }
 }
@@ -143,13 +204,14 @@ static void wifi_broadcom_wiced_spi_internal(
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface wifi_network_data_if i_data[n_data], size_t n_data,
+    server interface wifi_network_data_if i_data,
     client interface spi_master_if i_spi,
     unsigned spi_device_index,
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs) {
 
   chan xcore_wwd_ctrl;
+  streaming chan c_xcore_wwd_pbuf;
 
   par {
     // TODO: 'combine' wifi_broadcom_wiced_spi_internal and xcore_wwd
@@ -158,9 +220,10 @@ void wifi_broadcom_wiced_spi(
       unsafe {
         xcore_wwd_ctrl_external = (unsafe chanend)xcore_wwd_ctrl;
         i_fs_global = i_fs;
+        wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
+                                       i_data, i_spi, spi_device_index,
+                                       c_xcore_wwd_pbuf);
       }
-      wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
-                                       i_data, n_data, i_spi, spi_device_index);
     }
 
     /* The SDK will expect to start this from the call to wwd_management_init
@@ -168,6 +231,11 @@ void wifi_broadcom_wiced_spi(
      * WWD RTOS callbacks cannot do this, so the driver task is started
      * immediately and waits to be initialised.
      */
-    xcore_wwd(i_irq, xcore_wwd_ctrl);
+    {
+      unsafe {
+        xcore_wwd_pbuf_external = (unsafe chanend)c_xcore_wwd_pbuf;
+      }
+      xcore_wwd(i_irq, xcore_wwd_ctrl);
+    }
   }
 }

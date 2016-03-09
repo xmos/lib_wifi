@@ -6,6 +6,7 @@
 
 #include <xs1.h>
 #include <stddef.h>
+#include "ethernet.h"
 #include "spi.h"
 #include "gpio.h"
 #include "filesystem.h"
@@ -15,6 +16,8 @@ typedef enum {
   WIFI_SUCCESS, ///< TODO: document
   WIFI_ERROR    ///< TODO: document
 } wifi_res_t;
+
+typedef struct pbuf * unsafe pbuf_p;
 
 /** Module HAL - similar to smi.h?
  * TODO: document
@@ -68,10 +71,10 @@ typedef interface wifi_network_config_if {
   void set_mac_address();
 
   /** TODO: document */
-  void get_link_state();
+  ethernet_link_state_t get_link_state();
 
   /** TODO: document */
-  void set_link_state(); // up/down
+  void set_link_state(ethernet_link_state_t state); // up/down
 
   /** TODO: document */
   void set_networking_mode(); // AP, AD Hoc, client, etc.
@@ -100,10 +103,14 @@ typedef interface wifi_network_config_if {
 typedef interface wifi_network_data_if {
 
   /** TODO: document */
-  void receive_packet();
+  [[clears_notification]]
+  pbuf_p receive_packet();
+
+  [[notification]]
+  slave void packet_ready();
 
   /** TODO: document */
-  void send_packet();
+  void send_packet(pbuf_p p);
 
   // TODO: Add function to notify clients of received packets
 } wifi_network_data_if;
@@ -111,7 +118,7 @@ typedef interface wifi_network_data_if {
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface wifi_network_data_if i_data[n_data], size_t n_data,
+    server interface wifi_network_data_if i_data,
     client interface spi_master_if i_spi,
     unsigned spi_device_index,
     client interface input_gpio_if i_irq,
