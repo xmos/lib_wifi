@@ -12,7 +12,7 @@
 #include "debug_print.h"
 #include "xassert.h"
 
-static const unsigned wifi_bcm_wiced_spi_speed_khz = 100; // TODO: max this out - BCM supports 50MHz
+static const unsigned wifi_bcm_wiced_spi_speed_khz = 1000; // TODO: max this out - BCM supports 50MHz (currently breaks above 1MHz)
 static const spi_mode_t wifi_bcm_wiced_spi_mode = SPI_MODE_1; // XXX: M3 ARM code appears to use SPI_MODE_3, LPC17xx code appears to use SPI_MODE_0...
 static const unsigned wifi_bcm_wiced_spi_ss_deassert_ms = 100;
 static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
