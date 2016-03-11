@@ -17,7 +17,6 @@ extern "C" {
 #include "wwd_bus_protocol_interface.h"
 #include "wwd_resource_interface.h"
 #include "wwd_network_interface.h"
-// #include "wiced_time.h"
 #ifdef __XC__
 }
 #endif

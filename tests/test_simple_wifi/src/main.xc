@@ -44,7 +44,6 @@ xtcp_ipconfig_t ipconfig = {
 
 void application(client interface wifi_hal_if i_hal,
                  client interface wifi_network_config_if i_conf) {
-  debug_printf("tmp\n");
   while (1);
 }
 

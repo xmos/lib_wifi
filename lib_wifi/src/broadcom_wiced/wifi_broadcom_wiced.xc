@@ -24,6 +24,9 @@ unsafe chanend xcore_wwd_ctrl_external;
 unsafe chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
+// Function prototype for xcore wrapper function found in xcore_wrappers.c
+void xcore_wifi_scan_networks();
+
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
   i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 2, line_state);
 }
@@ -58,6 +61,13 @@ void xcore_wiced_send_pbuf_to_internal(pbuf_p p) {
   }
 }
 
+unsigned xcore_get_ticks() {
+  timer t;
+  unsigned time;
+  t :> time;
+  return time;
+}
+
 #define NUM_BUFFERS 10
 
 /*
@@ -68,33 +78,6 @@ typedef struct {
   unsigned head;
   unsigned tail;
 } buffers_t;
-
-// static wiced_time_t scan_start_time;
-
-// /*
-//  * Callback function to handle scan results
-//  */
-// wiced_result_t scan_result_handler(wiced_scan_handler_result_t *malloced_scan_result) {
-//   if (malloced_scan_result != NULL) {
-//     malloc_transfer_to_curr_thread(malloced_scan_result);
-
-//     if (malloced_scan_result->status == WICED_SCAN_INCOMPLETE) {
-//       wiced_scan_result_t *record = &malloced_scan_result->ap_details;
-
-//       WPRINT_APP_INFO( ( "%3d ", record_count ) );
-//       print_scan_result(record);
-//       ++record_count;
-//     } else {
-//       wiced_time_t scan_end_time;
-//       wiced_time_get_time(&scan_end_time);
-//       debug_printf("\nScan complete in %lu milliseconds\n", scan_end_time - scan_start_time);
-//     }
-
-//     free(malloced_scan_result);
-//   }
-
-//   return WICED_SUCCESS;
-// }
 
 static void buffers_init(buffers_t &buffers) {
   buffers.head = 0;
@@ -205,7 +188,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
 
       case i_conf[int i].scan_for_networks():
         debug_printf("Internal scan_for_networks\n");
-        // wiced_wifi_scan_networks(scan_result_handler, NULL);
+        xcore_wifi_scan_networks();
         break;
 
       case i_conf[int i].get_num_networks() -> size_t num_networks:
@@ -243,7 +226,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
         // Increment the reference count as LWIP assumes packets have to be
         // deleted, and so does the WIFI library
         pbuf_ref(p);
-        wwd_network_send_ethernet_data(p, WWD_AP_INTERFACE);
+        wwd_network_send_ethernet_data(p, WWD_STA_INTERFACE);
         break;
 
       case c_xcore_wwd_pbuf :> pbuf_p p:
