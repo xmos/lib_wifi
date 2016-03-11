@@ -301,6 +301,7 @@ void xcore_wwd(client interface input_gpio_if i_irq,
        */
       case wwd_inited => i_irq.event():
         // Configure IRQ input to event again next time it's asserted
+        i_irq.input();
         i_irq.event_when_pins_eq(1); // TODO: define a value to use here?
 
         wwd_bus_interrupt = WICED_TRUE;
