@@ -145,9 +145,9 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
       case i_hal[int i].init_radio():
         // Initialise driver and hardware
         debug_printf("Initialising WWD...\n");
-        // wwd_result_t result = wwd_management_init(WICED_COUNTRY_UNITED_KINGDOM,
-        //                                           NULL);
-        // assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
+        wwd_result_t result = wwd_management_init(WICED_COUNTRY_UNITED_KINGDOM,
+                                                  NULL);
+        assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
         debug_printf("WWD initialisation complete\n");
         break;
 
