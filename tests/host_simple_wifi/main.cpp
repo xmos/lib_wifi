@@ -33,8 +33,9 @@ void xscope_print(unsigned long long timestamp,
 #define TOKENS " \n"
 void handle_command_disconnected(char data[], state_t *state) {
   char *cmd = strtok(data, TOKENS);
-  if ((strcmp(cmd, "c") == 0) ||
-      (strcmp(data, "connect") == 0)) {
+  if (cmd &&
+      ((strcmp(cmd, "c") == 0) ||
+       (strcmp(data, "connect") == 0))) {
     const char *ip = strtok(NULL, TOKENS);
     const char *port = strtok(NULL, TOKENS);
 

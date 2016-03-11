@@ -10,8 +10,6 @@
 // TODO: Ensure assertions can be disabled, define debug unit here?
 #include "xassert.h"
 
-volatile uint32_t noos_total_time = 0; // TODO: remove!
-
 wwd_result_t host_rtos_create_thread(host_thread_type_t* thread,
                                      void(*entry_function)(uint32_t),
                                      const char* name, void* stack,
@@ -201,8 +199,11 @@ wwd_result_t host_rtos_deinit_semaphore(host_semaphore_type_t* semaphore) {
   return WWD_SUCCESS;
 }
 
+extern unsigned xcore_get_ticks();
+
 wwd_time_t host_rtos_get_time() {
-  return (wwd_time_t)noos_total_time; // XXX: should return ticks since boot in ms
+  // Convert ticks to ms
+  return (wwd_time_t)(xcore_get_ticks() / 100000);
 }
 
 wwd_result_t host_rtos_delay_milliseconds(uint32_t num_ms) {
