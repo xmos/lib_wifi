@@ -18,7 +18,7 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-GEN_XCC_FLAGS = -g -O0 -save-temps -fxscope -DDEBUG_PRINT_ENABLE=1 -DLWIP_XTCP=1 -DXASSERT_ENABLE_ASSERTIONS=1 -DXASSERT_ENABLE_DEBUG=1 -fno-inline-functions
+GEN_XCC_FLAGS = -g -O0 -save-temps -fxscope -DLWIP_XTCP=1 -DXASSERT_ENABLE_ASSERTIONS=1 -DXASSERT_ENABLE_DEBUG=1 -fno-inline-functions
 
 XCC_FLAGS = # Using GEN_XCC_FLAGS to allow for XCC_C_FLAGS to tidy lib_xtcp
 XCC_C_FLAGS = $(GEN_XCC_FLAGS) -Wno-ignored-attributes -Wno-typedef-redefinition # TODO: remove these warning supressions - just to tidy up lib_xtcp
