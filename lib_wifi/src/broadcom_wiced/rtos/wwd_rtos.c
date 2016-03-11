@@ -117,26 +117,26 @@ static bool conditional_decrement(unsigned* ptr, unsigned min) {
   return success;
 }
 
-static bool semaphore_increment(host_semaphore_type_t* semaphore,
-                                unsigned max_count,
-                                unsigned timeout_ms) {
+int semaphore_increment(host_semaphore_type_t* semaphore,
+                         unsigned max_count,
+                         unsigned timeout_ms) {
   clock_t current_time, exit_time;
 
   exit_time = clock();
   exit_time += (timeout_ms * XS1_TIMER_KHZ); // Scale timeout up to timer ticks
   while (!conditional_increment((unsigned*)semaphore, max_count)) {
     if (timeout_ms == 0) {
-      return false; // Fail immediately
+      return 0; // Fail immediately
     } else {
       delay_microseconds(1); // Yield processing power
       current_time = clock();
       if (((int)(exit_time - current_time) < 0) &&
           (timeout_ms != NEVER_TIMEOUT)) {
-        return false; // Timed out
+        return 0; // Timed out
       }
     }
   }
-  return true;
+  return 1;
 }
 
 static bool semaphore_decrement(host_semaphore_type_t* semaphore,

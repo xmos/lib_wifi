@@ -19,6 +19,10 @@ extern wwd_result_t host_rtos_get_semaphore(host_semaphore_type_t* semaphore,
 extern wwd_result_t host_rtos_set_semaphore(host_semaphore_type_t* semaphore,
                                             wiced_bool_t called_from_ISR);
 extern wwd_result_t host_rtos_deinit_semaphore(host_semaphore_type_t* semaphore);
+
+extern int semaphore_increment(host_semaphore_type_t* semaphore,
+                               unsigned max_count,
+                               unsigned timeout_ms);
 }
 
 /* Cannot include wwd_internal.h as it contains prototypes which use
@@ -308,8 +312,10 @@ void xcore_wwd(client interface input_gpio_if i_irq,
 
         // Just wake up the main thread and let it deal with the data
         if (wwd_inited == WICED_TRUE) {
-          host_rtos_set_semaphore(&wwd_transceive_semaphore, WICED_TRUE);
-          wwd_thread_func();
+          if (semaphore_increment(&wwd_transceive_semaphore,
+                                  WIFI_BCM_WWD_SEMAPHORE_MAX_VAL, 0)) {
+            wwd_thread_func();
+          }
         }
         break;
 
