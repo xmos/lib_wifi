@@ -1,13 +1,17 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-#include "wifi.h"
+#include <xs1.h>
 #include <platform.h>
+#include <xscope.h>
+#include <quadflash.h>
+#include <print.h>
+#include <string.h>
+
+#include "wifi.h"
 #include "spi.h"
 #include "gpio.h"
-#include <quadflash.h>
 #include "qspi_flash_storage_media.h"
 #include "filesystem.h"
 #include "xtcp.h"
-#include <xs1.h>
 
 #include "debug_print.h"
 
@@ -76,25 +80,78 @@ void sleep_clock_gen() {
   }
 }
 
+[[combinable]]
+void process_xscope(chanend xscope_data_in,
+                    client interface wifi_network_config_if i_conf) {
+  int bytesRead = 0;
+  unsigned char buffer[256];
+
+  xscope_connect_data_from_host(xscope_data_in);
+
+  printstrln("XMOS WIFI demo:\n");
+
+  while (1) {
+    select {
+      case xscope_data_from_host(xscope_data_in, buffer, bytesRead):
+      if (bytesRead) {
+        debug_printf("xCORE received '%s'\n", buffer);
+        if (strcmp(buffer, "scan") == 0) {
+          i_conf.scan_for_networks();
+
+        } else if (strcmp(buffer, "show") == 0) {
+          size_t num_networks = i_conf.get_num_networks();
+          debug_printf("Printing %d networks\n", num_networks);
+          for (size_t i = 0; i < num_networks; i++) {
+            const wiced_ssid_t * unsafe ssid = i_conf.get_network_ssid(i);
+            // The SSID name is not guaranteed to be null-terminated
+            printstr("Network");
+            printint(i);
+            printstr(": SSID: ");
+            unsafe {
+              for (size_t c = 0; c < ssid->length; c++) {
+                printchar(ssid->value[c]);
+              }
+            }
+            printstr("\n");
+          }
+        }
+      }
+      break;
+    }
+  }
+}
+
+typedef enum {
+  CONFIG_APP = 0,
+  CONFIG_XTCP,
+  CONFIG_XSCOPE,
+  NUM_CONFIG
+} config_interfaces;
+
 int main(void) {
   interface wifi_hal_if i_hal[2];
-  interface wifi_network_config_if i_conf[2];
+  interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface wifi_network_data_if i_data;
   interface spi_master_if i_spi[1];
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
+  chan c_xscope_data_in;
 
   chan c_xtcp[1];
 
   par {
-    on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, 2,
+    xscope_host_data(c_xscope_data_in);
+
+    on tile[1]:                process_xscope(c_xscope_data_in, i_conf[CONFIG_XSCOPE]);
+    on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, NUM_CONFIG,
                                                        i_data, i_spi[0], 0,
                                                        i_inputs[0], i_fs[0]);
-    on tile[1]:                application(i_hal[0], i_conf[0]);
+    on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]);
     on tile[1]: [[distribute]] spi_master(i_spi, 1, p_sclk, p_mosi, p_miso,
                                           p_ss, 1, null);
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
-    on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1], i_conf[1],
+    on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
+                                              i_conf[CONFIG_XTCP],
                                               i_data, ipconfig);
     // on tile[0]:                sleep_clock_gen();
     on tile[0]:                filesystem_tasks(i_fs);

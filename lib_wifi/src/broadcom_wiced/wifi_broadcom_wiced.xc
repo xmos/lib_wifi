@@ -1,12 +1,14 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-#include "wifi_broadcom_wiced.h"
-#include "wifi.h"
 #include <stddef.h>
 #include <stdint.h>
+
+#include "wifi_broadcom_wiced.h"
+#include "wifi.h"
 #include "spi.h"
 #include "gpio.h"
 #include "xc2compat.h"
 #include "xc_broadcom_wiced_includes.h"
+#include "lwip/pbuf.h"
 
 #define DEBUG_UNIT WIFI_DEBUG
 #include "debug_print.h"
@@ -67,6 +69,33 @@ typedef struct {
   unsigned tail;
 } buffers_t;
 
+// static wiced_time_t scan_start_time;
+
+// /*
+//  * Callback function to handle scan results
+//  */
+// wiced_result_t scan_result_handler(wiced_scan_handler_result_t *malloced_scan_result) {
+//   if (malloced_scan_result != NULL) {
+//     malloc_transfer_to_curr_thread(malloced_scan_result);
+
+//     if (malloced_scan_result->status == WICED_SCAN_INCOMPLETE) {
+//       wiced_scan_result_t *record = &malloced_scan_result->ap_details;
+
+//       WPRINT_APP_INFO( ( "%3d ", record_count ) );
+//       print_scan_result(record);
+//       ++record_count;
+//     } else {
+//       wiced_time_t scan_end_time;
+//       wiced_time_get_time(&scan_end_time);
+//       debug_printf("\nScan complete in %lu milliseconds\n", scan_end_time - scan_start_time);
+//     }
+
+//     free(malloced_scan_result);
+//   }
+
+//   return WICED_SUCCESS;
+// }
+
 static void buffers_init(buffers_t &buffers) {
   buffers.head = 0;
   buffers.tail = 0;
@@ -104,18 +133,21 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
   i_wifi_bcm_wiced_spi = i_spi;
   wifi_bcm_wiced_spi_device_index = spi_device_index;
 
-  buffers_t rx_buffers, tx_buffers;
+  buffers_t rx_buffers;
   buffers_init(rx_buffers);
-  buffers_init(tx_buffers);
+
+  wiced_ssid_t ssids[] = { {6, "SSID_1"}, {6, "SSID_2"} };
+  size_t num_active_networks = 2;
+
   while (1) {
     select {
       // WiFi HAL interface
       case i_hal[int i].init_radio():
         // Initialise driver and hardware
         debug_printf("Initialising WWD...\n");
-        wwd_result_t result = wwd_management_init(WICED_COUNTRY_UNITED_KINGDOM,
-                                                  NULL);
-        assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
+        // wwd_result_t result = wwd_management_init(WICED_COUNTRY_UNITED_KINGDOM,
+        //                                           NULL);
+        // assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
         debug_printf("WWD initialisation complete\n");
         break;
 
@@ -172,16 +204,32 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
         break;
 
       case i_conf[int i].scan_for_networks():
+        debug_printf("Internal scan_for_networks\n");
+        // wiced_wifi_scan_networks(scan_result_handler, NULL);
         break;
 
-      case i_conf[int i].join_network(unsigned ssid):
+      case i_conf[int i].get_num_networks() -> size_t num_networks:
+        debug_printf("Internal get_num_networks\n");
+        num_networks = num_active_networks;
         break;
 
-      case i_conf[int i].leave_network(unsigned ssid):
+      case i_conf[int i].get_network_ssid(size_t index) -> const wiced_ssid_t * unsafe ssid:
+        if (index < num_active_networks) {
+          ssid = &ssids[index];
+        } else {
+          ssid = NULL;
+        }
+        break;
+
+      case i_conf[int i].join_network(size_t index):
+        break;
+
+      case i_conf[int i].leave_network(size_t index):
         break;
 
       // TODO: WiFi network data interface
       case i_data.receive_packet() -> pbuf_p p:
+        debug_printf("Internal receive_packet\n");
         p = buffers_take(rx_buffers);
         if (!buffers_is_empty(rx_buffers)) {
           // If there are still packets to be consumed then notify client again
@@ -190,7 +238,12 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
         break;
 
       case i_data.send_packet(pbuf_p p):
-        buffers_put(tx_buffers, p);
+        // Queue the packet for the WIFI to send it
+        debug_printf("Internal send_packet\n");
+        // Increment the reference count as LWIP assumes packets have to be
+        // deleted, and so does the WIFI library
+        pbuf_ref(p);
+        wwd_network_send_ethernet_data(p, WWD_AP_INTERFACE);
         break;
 
       case c_xcore_wwd_pbuf :> pbuf_p p:
@@ -210,7 +263,7 @@ void wifi_broadcom_wiced_spi(
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs) {
 
-  chan xcore_wwd_ctrl;
+  chan c_xcore_wwd_ctrl;
   streaming chan c_xcore_wwd_pbuf;
 
   par {
@@ -218,7 +271,7 @@ void wifi_broadcom_wiced_spi(
     // Start the interface task
     {
       unsafe {
-        xcore_wwd_ctrl_external = (unsafe chanend)xcore_wwd_ctrl;
+        xcore_wwd_ctrl_external = (unsafe chanend)c_xcore_wwd_ctrl;
         i_fs_global = i_fs;
         wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
                                        i_data, i_spi, spi_device_index,
@@ -235,7 +288,7 @@ void wifi_broadcom_wiced_spi(
       unsafe {
         xcore_wwd_pbuf_external = (unsafe chanend)c_xcore_wwd_pbuf;
       }
-      xcore_wwd(i_irq, xcore_wwd_ctrl);
+      xcore_wwd(i_irq, c_xcore_wwd_ctrl);
     }
   }
 }

@@ -6,6 +6,7 @@
 
 #include <xs1.h>
 #include <stddef.h>
+#include "xc_broadcom_wiced_includes.h"
 #include "ethernet.h"
 #include "spi.h"
 #include "gpio.h"
@@ -84,10 +85,16 @@ typedef interface wifi_network_config_if {
   void scan_for_networks();
 
   /** TODO: document */
-  void join_network(unsigned ssid); // XXX: need to pass in password/key
+  size_t get_num_networks();
 
   /** TODO: document */
-  void leave_network(unsigned ssid); // can you be connected to more than one?
+  const wiced_ssid_t * unsafe get_network_ssid(size_t index);
+
+  /** TODO: document */
+  void join_network(size_t index); // XXX: need to pass in password/key
+
+  /** TODO: document */
+  void leave_network(size_t index); // can you be connected to more than one?
 
   // TODO: MAC address filtering/ethertype filtering/
 

@@ -10,12 +10,14 @@
 #ifdef __XC__
 extern "C" {
 #endif
-#include "wwd_constants.h"
+#include "wwd_structures.h"
 #include "wwd_management.h"
 #include "wwd_bus_interface.h"
 #include "wwd_sdpcm.h"
 #include "wwd_bus_protocol_interface.h"
 #include "wwd_resource_interface.h"
+#include "wwd_network_interface.h"
+// #include "wiced_time.h"
 #ifdef __XC__
 }
 #endif
