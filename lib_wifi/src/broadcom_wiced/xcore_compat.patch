@@ -240,7 +240,7 @@ index 3e0b946..8a98001 100644
      wwd_wifi_ap_is_up = WICED_FALSE;
      return WWD_SUCCESS;
 diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c b/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c
-index 9fb523f..c655307 100644
+index 9fb523f..d1c14c3 100644
 --- a/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c
 +++ b/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c
 @@ -36,6 +36,7 @@
@@ -251,15 +251,6 @@ index 9fb523f..c655307 100644
  
  /******************************************************
   * @cond       Constants
-@@ -93,7 +94,7 @@
- #define  isclr(a, i)    ((((const uint8_t*)a)[(int)(i)/(int)(NBBY)] & (1<<((i)%NBBY))) == 0)
- #endif /* setbit */
- 
--#define DATA_AFTER_HEADER( x )   ((void*)(&x[1]))
-+#define DATA_AFTER_HEADER( x )   (0) /* XXX: This macro was originally ((void*)(&x[1]))... */
- 
- /******************************************************
-  *             Local Structures
 @@ -234,7 +235,7 @@ typedef struct bcm_event
  typedef struct
  {
