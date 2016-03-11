@@ -87,7 +87,7 @@ static wwd_time_t scan_start_time;
 void scan_result_handler(wiced_scan_result_t **result_ptr, wiced_scan_status_t status) {
   if (result_ptr != NULL) {
     if (status == WICED_SCAN_INCOMPLETE) {
-      WPRINT_APP_INFO( ( "%3d ", record_count ) );
+      WPRINT_APP_INFO(("%3d ", record_count));
       print_scan_result(*result_ptr);
       ++record_count;
     }
@@ -117,12 +117,14 @@ void scan_result_callback_wrapper(
   }
 }
 
+static wiced_scan_result_t scan_result;
+
 void xcore_wifi_scan_networks() {
   const uint16_t chlist[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,0 };
   const wiced_scan_extended_params_t extparam = { 5, 110, 110, 50 };
-  wiced_scan_result_t scan_result;
   wiced_scan_result_t *scan_result_ptr = &scan_result;
 
+  record_count = 0;
   scan_start_time = host_rtos_get_time();
 
   wwd_wifi_scan( WICED_SCAN_TYPE_ACTIVE, WICED_BSS_TYPE_ANY, NULL, NULL,
