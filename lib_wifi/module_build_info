@@ -21,6 +21,8 @@ INCLUDE_DIRS = api \
   src/broadcom_wiced/rtos \
   src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/include \
   src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/libraries/utilities/TLV \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED \
+  src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/platform/include \
   src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD \
   src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/include \
   src/broadcom_wiced/sdk/WICED-SDK-$(WICED_SDK_VERSION)/WICED/WWD/include/network \
