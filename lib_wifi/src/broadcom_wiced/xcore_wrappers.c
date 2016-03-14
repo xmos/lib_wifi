@@ -1,7 +1,6 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include "wwd_events.h"
 #include "wwd_wifi.h"
-#include "wwd_wifi.h"
 #include "wwd_debug.h"
 #include "wwd_structures.h"
 #include <stddef.h>
