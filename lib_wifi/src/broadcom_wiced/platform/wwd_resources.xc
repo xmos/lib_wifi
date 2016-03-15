@@ -4,6 +4,9 @@
 #include "filesystem.h"
 #include "wifi_nvram_image.h"
 #include <string.h>
+
+#undef DEBUG_UNIT
+#define DEBUG_UNIT WIFI_WWD_RESOURCES_DEBUG
 #include "debug_print.h"
 
 // Cannot include wiced_resource.h, so a result macro is defined here
@@ -138,9 +141,11 @@ wwd_result_t host_platform_resource_read_indirect(wwd_resource_t resource,
          * returning the actual number of bytes read in size_out
          */
         size_t local_size_out = *size_out;
+        debug_printf("Attempting to read %d bytes... ", buffer_size);
         fs_result = i_fs_global.read((uint8_t *)buffer, buffer_size, buffer_size,
                                      local_size_out);
         *size_out = local_size_out;
+        debug_printf("read %d bytes\n", local_size_out);
         if (fs_result != FS_RES_OK) {
           fail("Error reading from filesystem\n");
           return WWD_PARTIAL_RESULTS;
