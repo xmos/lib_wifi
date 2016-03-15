@@ -46,7 +46,7 @@ extern wwd_wlan_status_t wwd_wlan_status; // Declared in wwd_internal.c
  * wifi_broadcom_wiced.xc and stored as a global so that it can be used by
  * functions which it cannot be passed to (within the WICED SDK).
  */
-extern unsafe chanend xcore_wwd_ctrl_external;
+extern unsafe streaming chanend xcore_wwd_ctrl_external;
 
 #define WWD_THREAD_POLL_TIMEOUT (10  * XS1_TIMER_KHZ) // Milliseconds XXX: required?
 
@@ -274,7 +274,7 @@ xcore_wwd_control_signal_t xcore_receive_control_signal() {
 /** TODO: document (brief) */
 [[combinable]]
 void xcore_wwd(client interface input_gpio_if i_irq,
-               chanend xcore_wwd_ctrl_internal) {
+               streaming chanend xcore_wwd_ctrl_internal) {
   timer t_periodic;
 
   // Get the initial timer value

@@ -20,7 +20,7 @@ static const unsigned wifi_bcm_wiced_spi_ss_deassert_ms = 100;
 static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsigned wifi_bcm_wiced_spi_device_index;
 
-unsafe chanend xcore_wwd_ctrl_external;
+unsafe streaming chanend xcore_wwd_ctrl_external;
 unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
@@ -246,7 +246,7 @@ void wifi_broadcom_wiced_spi(
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs) {
 
-  chan c_xcore_wwd_ctrl;
+  streaming chan c_xcore_wwd_ctrl;
   streaming chan c_xcore_wwd_pbuf;
 
   par {
@@ -254,7 +254,7 @@ void wifi_broadcom_wiced_spi(
     // Start the interface task
     {
       unsafe {
-        xcore_wwd_ctrl_external = (unsafe chanend)c_xcore_wwd_ctrl;
+        xcore_wwd_ctrl_external = (unsafe streaming chanend)c_xcore_wwd_ctrl;
         i_fs_global = i_fs;
         wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
                                        i_data, i_spi, spi_device_index,

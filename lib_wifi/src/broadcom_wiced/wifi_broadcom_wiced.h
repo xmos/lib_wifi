@@ -38,7 +38,7 @@ void xcore_wiced_send_pbuf_to_internal(wiced_buffer_t p);
 /** TODO: document (brief) */
 [[combinable]]
 void xcore_wwd(client interface input_gpio_if i_irq,
-               chanend xcore_wwd_ctrl_internal);
+               streaming chanend xcore_wwd_ctrl_internal);
 
 #endif // __XC__
 
