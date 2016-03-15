@@ -21,7 +21,7 @@ static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsigned wifi_bcm_wiced_spi_device_index;
 
 unsafe chanend xcore_wwd_ctrl_external;
-unsafe chanend xcore_wwd_pbuf_external;
+unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
 // Function prototype for xcore wrapper function found in xcore_wrappers.c
@@ -269,7 +269,7 @@ void wifi_broadcom_wiced_spi(
      */
     {
       unsafe {
-        xcore_wwd_pbuf_external = (unsafe chanend)c_xcore_wwd_pbuf;
+        xcore_wwd_pbuf_external = (unsafe streaming chanend)c_xcore_wwd_pbuf;
       }
       xcore_wwd(i_irq, c_xcore_wwd_ctrl);
     }
