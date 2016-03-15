@@ -311,11 +311,9 @@ void xcore_wwd(client interface input_gpio_if i_irq,
         wwd_bus_interrupt = WICED_TRUE;
 
         // Just wake up the main thread and let it deal with the data
-        if (wwd_inited == WICED_TRUE) {
-          if (semaphore_increment(&wwd_transceive_semaphore,
-                                  WIFI_BCM_WWD_SEMAPHORE_MAX_VAL, 0)) {
-            wwd_thread_func();
-          }
+        if (semaphore_increment(&wwd_transceive_semaphore,
+                                WIFI_BCM_WWD_SEMAPHORE_MAX_VAL, 0)) {
+          wwd_thread_func();
         }
         break;
 
