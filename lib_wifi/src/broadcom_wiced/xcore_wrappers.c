@@ -172,12 +172,13 @@ void scan_result_callback_wrapper(
       break;
   }
 }
+wiced_scan_result_t *scan_result_ptr;
 
 void xcore_wifi_scan_networks() {
   // Clear any previous scan results
   memset(&scan_results, 0, sizeof(wiced_scan_result_t)*record_count);
   record_count = 0;
-  wiced_scan_result_t *scan_result_ptr = &scan_results[record_count];
+  scan_result_ptr = &scan_results[record_count];
   scan_start_time = host_rtos_get_time();
 
   wwd_wifi_scan( WICED_SCAN_TYPE_ACTIVE, WICED_BSS_TYPE_ANY, NULL, NULL,
