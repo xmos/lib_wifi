@@ -201,6 +201,8 @@ void xcore_wifi_join_network_at_index(size_t index,
    * Pass NULL to semaphore argument.
    */
   wiced_scan_result_t *scan_result_ptr = &scan_results[index];
-  wwd_wifi_join(&scan_result_ptr->SSID, scan_result_ptr->security,
-                security_key, key_length, NULL);
+  unsigned result = wwd_wifi_join(&scan_result_ptr->SSID,
+                                  scan_result_ptr->security,
+                                  security_key, key_length, NULL);
+  debug_printf("Join result = %d\n", result);
 }
