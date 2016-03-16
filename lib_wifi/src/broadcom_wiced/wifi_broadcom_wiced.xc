@@ -10,6 +10,7 @@
 #include "xc_broadcom_wiced_includes.h"
 #include "lwip/pbuf.h"
 
+#undef DEBUG_UNIT
 #define DEBUG_UNIT WIFI_DEBUG
 #include "debug_print.h"
 #include "xassert.h"
