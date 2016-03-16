@@ -174,9 +174,6 @@ void scan_result_callback_wrapper(
 }
 
 void xcore_wifi_scan_networks() {
-  const uint16_t chlist[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,0 };
-  const wiced_scan_extended_params_t extparam = { 5, 110, 110, 50 };
-
   // Clear any previous scan results
   memset(&scan_results, 0, sizeof(wiced_scan_result_t)*record_count);
   record_count = 0;
@@ -184,7 +181,7 @@ void xcore_wifi_scan_networks() {
   scan_start_time = host_rtos_get_time();
 
   wwd_wifi_scan( WICED_SCAN_TYPE_ACTIVE, WICED_BSS_TYPE_ANY, NULL, NULL,
-    chlist, &extparam, CALLBACK_SCAN_RESULT_FUNC, &scan_result_ptr,
+    NULL, NULL, CALLBACK_SCAN_RESULT_FUNC, &scan_result_ptr,
     NULL, WWD_STA_INTERFACE);
 }
 
