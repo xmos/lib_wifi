@@ -1,4 +1,5 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
+#include "wifi.h"
 #include "wwd_events.h"
 #include "wwd_wifi.h"
 #include "wwd_debug.h"
@@ -6,6 +7,7 @@
 #include <stddef.h>
 #include "xassert.h"
 #include "debug_print.h"
+#include <string.h>
 
 void* wwd_scan_result_handler(const wwd_event_header_t* event_header,
                               const uint8_t* event_data,
@@ -77,24 +79,79 @@ void print_scan_result( wiced_scan_result_t *record )
     WPRINT_APP_INFO( ( "\n" ) );
 }
 
+static wiced_scan_result_t scan_results[WIFI_MAX_SCAN_RESULTS];
 static int record_count;
 static wwd_time_t scan_start_time;
+
+// FIXME: give this a proper return type when there is no match
+int find_duplicate_scan_result(wiced_scan_result_t *result_ptr) {
+  for (int i = 0; i < record_count; i++) {
+    // Check if all octets of BSSID match
+    if (memcmp(result_ptr->BSSID.octet, scan_results[i].BSSID.octet,
+               sizeof(wiced_mac_t))) {
+      continue;
+    }
+    // if they do, check if it's on the same band
+    if (result_ptr->band != scan_results[i].band) {
+      continue;
+    }
+    // if it is, check if the channel is the same
+    if (result_ptr->channel != scan_results[i].channel) {
+      continue;
+    }
+    // if it is, check if SSID matches
+    if ((result_ptr->SSID.length != scan_results[i].SSID.length) ||
+        (memcmp(result_ptr->SSID.value, scan_results[i].SSID.value,
+                 scan_results[i].SSID.length))) {
+      continue;
+    }
+    // if it does, check the network type matches - warn if not?
+    if (result_ptr->bss_type != scan_results[i].bss_type) {
+      continue;
+    }
+    // if it does, check the security type matches
+    if (result_ptr->security != scan_results[i].security) {
+      continue;
+    }
+    // Return index of duplicate
+    return i;
+  }
+  return -1; // No match found
+}
 
 /*
  * Callback function to handle scan results
  */
-void scan_result_handler(wiced_scan_result_t **result_ptr, wiced_scan_status_t status) {
+void scan_result_handler(wiced_scan_result_t **result_ptr,
+                         wiced_scan_status_t status) {
   if (result_ptr != NULL) {
     if (status == WICED_SCAN_INCOMPLETE) {
-      WPRINT_APP_INFO(("%3d ", record_count));
-      print_scan_result(*result_ptr);
+      int dup_index = find_duplicate_scan_result(*result_ptr);
+      if (dup_index != -1) {
+        // TODO: update the max data rate, signal strength
+        // Clear duplicate
+        memset(*result_ptr, 0, sizeof(wiced_scan_result_t));
+        // FIXME: clears the last valid result if WIFI_MAX_SCAN_RESULTS is reached
+        return;
+      }
       ++record_count;
+      if (record_count < WIFI_MAX_SCAN_RESULTS) {
+        // Bump results_ptr on to point at the next element of scan_results
+        *result_ptr = &scan_results[record_count];
+      } else if (record_count == WIFI_MAX_SCAN_RESULTS) {
+        debug_printf("Aborting scan as maximum number of results reached\n");
+        wwd_wifi_abort_scan(); // TODO: check return code
+      }
     }
   } else {
     wwd_time_t scan_end_time = host_rtos_get_time();
     debug_printf("\nScan %s %d milliseconds\n",
       (status == WICED_SCAN_COMPLETED_SUCCESSFULLY) ? "completed in" : "aborted after",
       scan_end_time - scan_start_time);
+    for (int i = 0; i < record_count; i++) {
+      WPRINT_APP_INFO(("%3d ", i));
+      print_scan_result(&scan_results[i]);
+    }
   }
 }
 
@@ -116,14 +173,14 @@ void scan_result_callback_wrapper(
   }
 }
 
-static wiced_scan_result_t scan_result;
-
 void xcore_wifi_scan_networks() {
   const uint16_t chlist[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,0 };
   const wiced_scan_extended_params_t extparam = { 5, 110, 110, 50 };
-  wiced_scan_result_t *scan_result_ptr = &scan_result;
 
+  // Clear any previous scan results
+  memset(&scan_results, 0, sizeof(wiced_scan_result_t)*record_count);
   record_count = 0;
+  wiced_scan_result_t *scan_result_ptr = &scan_results[record_count];
   scan_start_time = host_rtos_get_time();
 
   wwd_wifi_scan( WICED_SCAN_TYPE_ACTIVE, WICED_BSS_TYPE_ANY, NULL, NULL,

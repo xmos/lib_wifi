@@ -2,6 +2,11 @@
 #ifndef __wifi_h__
 #define __wifi_h__
 
+#ifndef WIFI_MAX_SCAN_RESULTS
+/** TODO: document */
+#define WIFI_MAX_SCAN_RESULTS 50
+#endif
+
 #ifdef __XC__
 
 #include <xs1.h>
