@@ -26,6 +26,8 @@ unsafe client interface fs_basic_if i_fs_global;
 
 // Function prototype for xcore wrapper function found in xcore_wrappers.c
 void xcore_wifi_scan_networks();
+void xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
+                                      size_t key_length);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
   i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 2, line_state);
@@ -204,7 +206,16 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
         }
         break;
 
-      case i_conf[int i].join_network(size_t index):
+      case i_conf[int i].join_network(size_t index,
+                                      uint8_t security_key[key_length],
+                                      size_t key_length):
+        debug_printf("join_network\n");
+        xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
+               msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
+        uint8_t local_key[WIFI_MAX_KEY_LENGTH];
+        memcpy(security_key, local_key, key_length*(sizeof(uint8_t)));
+        xcore_wifi_join_network_at_index(index, local_key, key_length);
+        // TODO: return status
         break;
 
       case i_conf[int i].leave_network(size_t index):

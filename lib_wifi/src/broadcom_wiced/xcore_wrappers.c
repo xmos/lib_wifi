@@ -187,3 +187,22 @@ void xcore_wifi_scan_networks() {
     chlist, &extparam, CALLBACK_SCAN_RESULT_FUNC, &scan_result_ptr,
     NULL, WWD_STA_INTERFACE);
 }
+
+void xcore_wifi_join_network_at_index(size_t index,
+                                      uint8_t security_key[],
+                                      size_t key_length) {
+  /* Take a pointer to SSID, so that wifi_network_config_if interface can expose
+   * methods that allow both using a scan result index and taking an SSID string
+   * directly.
+   *
+   * Take security type as an arg, interface method that uses can results can
+   * pass this in directly.
+   *
+   * Take key as reference to character array.
+   *
+   * Pass NULL to semaphore argument.
+   */
+  wiced_scan_result_t *scan_result_ptr = &scan_results[index];
+  wwd_wifi_join(&scan_result_ptr->SSID, scan_result_ptr->security,
+                security_key, key_length, NULL);
+}

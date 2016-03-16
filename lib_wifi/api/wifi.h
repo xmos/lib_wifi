@@ -7,6 +7,11 @@
 #define WIFI_MAX_SCAN_RESULTS 50
 #endif
 
+#ifndef WIFI_MAX_KEY_LENGTH
+/** TODO: document */
+#define WIFI_MAX_KEY_LENGTH 50
+#endif
+
 #ifdef __XC__
 
 #include <xs1.h>
@@ -96,7 +101,8 @@ typedef interface wifi_network_config_if {
   const wiced_ssid_t * unsafe get_network_ssid(size_t index);
 
   /** TODO: document */
-  void join_network(size_t index); // XXX: need to pass in password/key
+  void join_network(size_t index, uint8_t security_key[key_length],
+                    size_t key_length);
 
   /** TODO: document */
   void leave_network(size_t index); // can you be connected to more than one?

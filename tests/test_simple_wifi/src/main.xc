@@ -14,6 +14,7 @@
 #include "xtcp.h"
 
 #include "debug_print.h"
+#include "xassert.h"
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
@@ -113,6 +114,20 @@ void process_xscope(chanend xscope_data_in,
             }
             printstr("\n");
           }
+        } else if (strcmp(buffer, "join") == 0) {
+          printstr("Enter scan result index of network to join:\n");
+          xscope_data_from_host(xscope_data_in, buffer, bytesRead);
+          size_t index;
+          xassert(bytesRead <= sizeof(index) &&
+                  msg("Scan index data too long\n"));
+          memcpy(&index, buffer, bytesRead);
+          printstr("Enter security key:\n");
+          xscope_data_from_host(xscope_data_in, buffer, bytesRead);
+          uint8_t key[WIFI_MAX_KEY_LENGTH];
+          xassert(bytesRead <= WIFI_MAX_KEY_LENGTH*sizeof(uint8_t) &&
+                  msg("Security key data too long\n"));
+          memcpy(key, buffer, bytesRead);
+          i_conf.join_network(index, key, bytesRead);
         }
       }
       break;
