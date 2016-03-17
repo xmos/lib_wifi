@@ -196,6 +196,7 @@ void xcore_wifi_join_network_at_index(size_t index,
                                   security_key, key_length, NULL);
   debug_printf("Join result = %d\n", result);
   // TODO: return result
+}
 
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t *mac_address) {
   return wwd_wifi_get_mac_address(mac_address, WWD_STA_INTERFACE);
