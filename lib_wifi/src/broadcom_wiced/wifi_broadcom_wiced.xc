@@ -29,6 +29,7 @@ unsafe client interface fs_basic_if i_fs_global;
 void xcore_wifi_scan_networks();
 void xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
                                       size_t key_length);
+wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
   i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 2, line_state);
@@ -174,11 +175,15 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
 
       // WiFi network configuration interface
       case i_conf[int i].get_mac_address(uint8_t mac_address[6]) -> wifi_res_t result:
-        // TODO: implement
-        for (int i = 0; i < 6; i++) { // TODO: remove
-          mac_address[i] = i;
+        wiced_mac_t local_mac;
+        unsafe {
+          result = (wifi_res_t)xcore_wifi_get_radio_mac_address(&local_mac);
         }
-        result = WIFI_SUCCESS;
+        memcpy(mac_address, &local_mac, 6);
+        // debug_printf doesn't support "%02X" formatting
+        debug_printf("WiFi MAC address: %x:%x:%x:%x:%x:%x\n",
+                     mac_address[0], mac_address[1], mac_address[2],
+                     mac_address[3], mac_address[4], mac_address[5]);
         break;
 
       case i_conf[int i].set_mac_address():
