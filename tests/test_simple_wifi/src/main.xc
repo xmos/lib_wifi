@@ -5,6 +5,7 @@
 #include <quadflash.h>
 #include <print.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "wifi.h"
 #include "spi.h"
@@ -117,17 +118,14 @@ void process_xscope(chanend xscope_data_in,
         } else if (strcmp(buffer, "join") == 0) {
           printstr("Enter scan result index of network to join:\n");
           xscope_data_from_host(xscope_data_in, buffer, bytesRead);
-          size_t index;
-          xassert(bytesRead <= sizeof(index) &&
-                  msg("Scan index data too long\n"));
-          memcpy(&index, buffer, bytesRead);
+          xassert(bytesRead && msg("Scan index data too short\n"));
+          size_t index = strtoul(buffer, NULL, 0);
           printstr("Enter security key:\n");
           xscope_data_from_host(xscope_data_in, buffer, bytesRead);
-          uint8_t key[WIFI_MAX_KEY_LENGTH];
-          xassert(bytesRead <= WIFI_MAX_KEY_LENGTH*sizeof(uint8_t) &&
+          xassert(bytesRead <= WIFI_MAX_KEY_LENGTH &&
                   msg("Security key data too long\n"));
-          memcpy(key, buffer, bytesRead);
-          i_conf.join_network(index, key, bytesRead);
+          // -1 due to \n being sent
+          i_conf.join_network(index, buffer, bytesRead-1);
         }
       }
       break;

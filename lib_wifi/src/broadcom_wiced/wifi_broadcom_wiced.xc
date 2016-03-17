@@ -214,7 +214,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
         xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
                msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
-        memcpy(security_key, local_key, key_length*(sizeof(uint8_t)));
+        memcpy(local_key, security_key, key_length);
         xcore_wifi_join_network_at_index(index, local_key, key_length);
         // TODO: return status
         break;
