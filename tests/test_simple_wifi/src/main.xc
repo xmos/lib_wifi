@@ -116,11 +116,9 @@ void process_xscope(chanend xscope_data_in,
             printstr("\n");
           }
         } else if (strcmp(buffer, "join") == 0) {
-          printstr("Enter scan result index of network to join:\n");
           xscope_data_from_host(xscope_data_in, buffer, bytesRead);
           xassert(bytesRead && msg("Scan index data too short\n"));
           size_t index = strtoul(buffer, NULL, 0);
-          printstr("Enter security key:\n");
           xscope_data_from_host(xscope_data_in, buffer, bytesRead);
           xassert(bytesRead <= WIFI_MAX_KEY_LENGTH &&
                   msg("Security key data too long\n"));
