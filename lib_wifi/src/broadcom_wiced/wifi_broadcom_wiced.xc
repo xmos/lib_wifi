@@ -89,7 +89,12 @@ static void buffers_init(buffers_t &buffers) {
 
 static unsafe pbuf_p buffers_take(buffers_t &buffers) {
   xassert(buffers.head != buffers.tail);
-  return buffers.buffers[buffers.head];
+  unsigned read_index = buffers.head;
+  buffers.head += 1;
+  if (buffers.head == NUM_BUFFERS) {
+    buffers.head = 0;
+  }
+  return buffers.buffers[read_index];
 }
 
 static unsafe pbuf_p buffers_put(buffers_t &buffers, pbuf_p p) {
@@ -242,6 +247,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
         break;
 
       case c_xcore_wwd_pbuf :> pbuf_p p:
+        debug_printf("Internal packet from WIFI\n");
         buffers_put(rx_buffers, p);
         i_data.packet_ready();
         break;
