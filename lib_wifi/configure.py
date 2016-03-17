@@ -5,6 +5,8 @@ import re
 import subprocess
 import shutil
 
+# TODO: add 'clean' option
+
 if __name__ == "__main__":
     # Extract WICED_SDK_VERSION value from module_build_info
     wiced_version = None

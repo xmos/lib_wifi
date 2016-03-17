@@ -311,6 +311,10 @@ void xcore_wwd(client interface input_gpio_if i_irq,
         wwd_bus_interrupt = WICED_TRUE;
 
         // Just wake up the main thread and let it deal with the data
+        /* FIXME: would be nice to remove this special case and call
+         * host_rtos_set_semaphore again
+         * (revert commit ffde131653cd5b680bc1205be2fb6292c9bb9943)
+         */
         if (semaphore_increment(&wwd_transceive_semaphore,
                                 WIFI_BCM_WWD_SEMAPHORE_MAX_VAL, 0)) {
           wwd_thread_func();
