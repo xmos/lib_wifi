@@ -6,13 +6,20 @@
 
 typedef enum {
   STATE_DISCONNECTED,
-  STATE_CONNECTED
+  STATE_CONNECTED,
+  STATE_INDEX,
+  STATE_PASSWORD,
 } state_t;
 
 void strip_right(char *str) {
   // Trim trailing space
+  size_t len = strlen(str);
+  if (!len) {
+    return;
+  }
+
   char *end = str + strlen(str) - 1;
-  while (end > str && isspace(*end)) {
+  while (end >= str && isspace(*end)) {
     end--;
   }
 
@@ -69,15 +76,74 @@ void handle_command_connected(char data[], state_t *state) {
     *state = STATE_DISCONNECTED;
 
   } else {
-    // Strip the trailing '\n'
-    strip_right(data);
-
     int result = xscope_ep_request_upload(strlen(data)+1, (const unsigned char *)data);
     if (result != XSCOPE_EP_SUCCESS) {
       printf("Failed to send string, disconnecting\n");
       *state = STATE_DISCONNECTED;
+    } else {
+      if (strcmp(data, "join") == 0) {
+        *state = STATE_INDEX;
+        printf("Enter scan result index of network to join:\n");
+      }
     }
   }
+}
+
+#ifdef _WIN32
+
+#include <windows.h>
+HANDLE hStdin
+DWORD mode;
+
+void disable_echo() {
+  SetConsoleMode(hStdin, mode & (~ENABLE_ECHO_INPUT));
+}
+
+void restore_echo() {
+  SetConsoleMode(hStdin, mode);
+}
+
+#else
+
+#include <termios.h>
+#include <unistd.h>
+termios oldt;
+
+void disable_echo() {
+  printf("disable_echo\n");
+  termios newt = oldt;
+  newt.c_lflag &= ~ECHO;
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+}
+
+void restore_echo() {
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  printf("restore_echo\n");
+}
+
+#endif
+
+void handle_command_index(char data[], state_t *state) {
+  int result = xscope_ep_request_upload(strlen(data)+1, (const unsigned char *)data);
+  if (result != XSCOPE_EP_SUCCESS) {
+    printf("Failed to send string, disconnecting\n");
+    *state = STATE_DISCONNECTED;
+  } else {
+    disable_echo();
+    *state = STATE_PASSWORD;
+    printf("Enter security key:\n");
+  }
+}
+
+void handle_command_password(char data[], state_t *state) {
+  int result = xscope_ep_request_upload(strlen(data)+1, (const unsigned char *)data);
+  if (result != XSCOPE_EP_SUCCESS) {
+    printf("Failed to send string, disconnecting\n");
+    *state = STATE_DISCONNECTED;
+  } else {
+    *state = STATE_CONNECTED;
+  }
+  restore_echo();
 }
 
 void print_help() {
@@ -86,6 +152,7 @@ void print_help() {
   printf("    A default IP of 'localhost' and a default port of 10234 are used\n");
   printf("    if not specified. If only one argument is passed it is assumed to\n");
   printf("    be the port and the IP address is assumed to be 'localhost'\n");
+  printf(" join : join a network\n");
   printf(" d|disconnect : disconnect current connection\n");
   printf(" h|?|help : print this help message\n");
   printf(" q|quit : quit\n");
@@ -98,21 +165,37 @@ int main (void) {
   char data[STRLEN] = "";
   state_t state = STATE_DISCONNECTED;
 
+  // Get the state of the terminal to be able to restore after getting the password
+  #ifdef _WIN32
+  hStdin = GetStdHandle(STD_INPUT_HANDLE);
+  GetConsoleMode(hStdin, &mode);
+  #else
+  tcgetattr(STDIN_FILENO, &oldt);
+  #endif
+
   xscope_ep_set_print_cb(xscope_print);
 
   printf("----- XMOS WIFI host controller -----\n");
 
   while (1) {
     if (fgets(data, STRLEN, stdin)) {
-      if ((strcmp(data, "q\n") == 0) ||
-          (strcmp(data, "quit\n") == 0)) {
+      // Strip the trailing '\n'
+      strip_right(data);
+
+      if (!strlen(data)) {
+        // Don't send blank lines
+        continue;
+      }
+
+      if ((strcmp(data, "q") == 0) ||
+          (strcmp(data, "quit") == 0)) {
         // Don't send the quit to the target
         break;
       }
 
-      if ((data[0] == '?') ||
-          (data[0] == 'h' && data[1] == '\n') ||
-          (strcmp(data, "help\n") == 0)) {
+      if ((strcmp(data, "?") == 0) ||
+          (strcmp(data, "h") == 0) ||
+          (strcmp(data, "help") == 0)) {
         print_help();
         continue;
       }
@@ -123,6 +206,12 @@ int main (void) {
         break;
       case STATE_CONNECTED:
         handle_command_connected(data, &state);
+        break;
+      case STATE_INDEX:
+        handle_command_index(data, &state);
+        break;
+      case STATE_PASSWORD:
+        handle_command_password(data, &state);
         break;
       }
     }
