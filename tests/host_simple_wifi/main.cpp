@@ -110,7 +110,6 @@ void restore_echo() {
 termios oldt;
 
 void disable_echo() {
-  printf("disable_echo\n");
   termios newt = oldt;
   newt.c_lflag &= ~ECHO;
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
@@ -118,7 +117,6 @@ void disable_echo() {
 
 void restore_echo() {
   tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-  printf("restore_echo\n");
 }
 
 #endif
