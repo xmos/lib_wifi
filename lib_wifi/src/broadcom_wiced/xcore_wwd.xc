@@ -62,14 +62,14 @@ wwd_result_t wwd_thread_init() {
 
   retval = wwd_sdpcm_init();
   if (retval != WWD_SUCCESS) {
-    WPRINT_WWD_ERROR(("Could not initialize SDPCM codec\n")); // TODO: replace with debug_printf
+    WPRINT_WWD_ERROR(("Could not initialize SDPCM codec\n"));
     return retval;
   }
 
   // Create the event flag which signals the WWD thread needs to wake up
   retval = host_rtos_init_semaphore(&wwd_transceive_semaphore);
   if (retval != WWD_SUCCESS) {
-    WPRINT_WWD_ERROR(("Could not initialize WWD thread semaphore\n")); // TODO: replace with debug_printf
+    WPRINT_WWD_ERROR(("Could not initialize WWD thread semaphore\n"));
     return retval;
   }
 
@@ -106,7 +106,7 @@ int8_t wwd_thread_send_one_packet() {
     return 0;
   }
 
-  WPRINT_WWD_DEBUG(("Wcd:> Sending pkt 0x%08X\n\r", (unsigned int)tmp_buf_hnd)); // TODO: replace with debug_printf
+  WPRINT_WWD_DEBUG(("Wcd:> Sending pkt 0x%08X\n\r", (unsigned int)tmp_buf_hnd));
   if (wwd_bus_send_buffer(tmp_buf_hnd) != WWD_SUCCESS) {
     return 0;
   }
@@ -123,7 +123,7 @@ int8_t wwd_thread_receive_one_packet() {
   }
 
   if (recv_buffer != NULL) { // Could be null if it was only a credit update
-    WWD_LOG(("Wcd:< Rcvd pkt 0x%08X\n", (unsigned int)recv_buffer)); // TODO: replace with debug_printf
+    WWD_LOG(("Wcd:< Rcvd pkt 0x%08X\n", (unsigned int)recv_buffer));
 
     // Send received buffer up to SDPCM layer
     wwd_sdpcm_process_rx_packet(recv_buffer);
