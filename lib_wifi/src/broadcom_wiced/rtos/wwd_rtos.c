@@ -122,7 +122,7 @@ int semaphore_increment(host_semaphore_type_t* semaphore,
 
   exit_time = clock();
   exit_time += (timeout_ms * XS1_TIMER_KHZ); // Scale timeout up to timer ticks
-  while (!conditional_increment((unsigned*)semaphore, max_count)) {
+  while (!conditional_increment(semaphore, max_count)) {
     if (timeout_ms == 0) {
       return 0; // Fail immediately
     } else {
@@ -144,7 +144,7 @@ static bool semaphore_decrement(host_semaphore_type_t* semaphore,
 
   exit_time = clock();
   exit_time += (timeout_ms * XS1_TIMER_KHZ); // Scale timeout up to timer ticks
-  while (!conditional_decrement((unsigned*)semaphore, min_count)) {
+  while (!conditional_decrement(semaphore, min_count)) {
     if (timeout_ms == 0) {
       return false; // Fail immediately
     } else {
