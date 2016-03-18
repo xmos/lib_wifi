@@ -91,7 +91,7 @@ static inline void hwlock_release()
                         : "memory");
 }
 
-static bool conditional_increment(unsigned* ptr, unsigned max) {
+static bool conditional_increment(host_semaphore_type_t* ptr, unsigned max) {
   bool success = false;
   hwlock_acquire();
   int tmp = *ptr;
@@ -103,7 +103,7 @@ static bool conditional_increment(unsigned* ptr, unsigned max) {
   return success;
 }
 
-static bool conditional_decrement(unsigned* ptr, unsigned min) {
+static bool conditional_decrement(host_semaphore_type_t* ptr, unsigned min) {
   bool success = false;
   hwlock_acquire();
   int tmp = *ptr;
