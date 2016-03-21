@@ -189,7 +189,6 @@ wwd_result_t host_rtos_set_semaphore(host_semaphore_type_t* semaphore,
     }
     return WWD_SUCCESS;
   } else {
-    fail("Unable to set semaphore\n");
     return WWD_SEMAPHORE_ERROR;
   }
 }
@@ -197,6 +196,10 @@ wwd_result_t host_rtos_set_semaphore(host_semaphore_type_t* semaphore,
 wwd_result_t host_rtos_deinit_semaphore(host_semaphore_type_t* semaphore) {
   // No structures to free
   return WWD_SUCCESS;
+}
+
+host_semaphore_type_t host_rtos_semaphore_value(host_semaphore_type_t* semaphore) {
+  return *semaphore;
 }
 
 extern unsigned xcore_get_ticks();

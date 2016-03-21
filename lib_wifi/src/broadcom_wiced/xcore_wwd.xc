@@ -20,6 +20,8 @@ extern wwd_result_t host_rtos_set_semaphore(host_semaphore_type_t* semaphore,
                                             wiced_bool_t called_from_ISR);
 extern wwd_result_t host_rtos_deinit_semaphore(host_semaphore_type_t* semaphore);
 
+extern host_semaphore_type_t host_rtos_semaphore_value(host_semaphore_type_t* semaphore);
+
 extern int semaphore_increment(host_semaphore_type_t* semaphore,
                                unsigned max_count,
                                unsigned timeout_ms);
@@ -41,12 +43,13 @@ typedef struct {
 } wwd_wlan_status_t;
 extern wwd_wlan_status_t wwd_wlan_status; // Declared in wwd_internal.c
 
-/* The xcore_wwd task takes the xcore_wwd_ctrl_internal channel end as a
- * parameter. The other end of this channel (externed here) is declared in
- * wifi_broadcom_wiced.xc and stored as a global so that it can be used by
+/* The xcore_wwd task takes the signals structure containing a chanend to
+ * be notified on. This structure contains the chanend that needs to be
+ * notified on the first entry added to the queue of pending signals.
+ * It is stored as a global so that it can be used by
  * functions which it cannot be passed to (within the WICED SDK).
  */
-extern unsafe streaming chanend xcore_wwd_ctrl_external;
+extern signals_t signals;
 
 #define WWD_THREAD_POLL_TIMEOUT (10  * XS1_TIMER_KHZ) // Milliseconds XXX: required?
 
@@ -76,14 +79,7 @@ wwd_result_t wwd_thread_init() {
   /* Rather than call host_rtos_create_thread() here, send start signal to
    * logical core waiting to run the WWD task.
    */
-// TODO: remove #if
-#if 0
   xcore_wwd_send_control_signal(XCORE_WWD_START);
-#else
-  unsafe {
-    xcore_wwd_ctrl_external <: XCORE_WWD_START;
-  }
-#endif
 
   wwd_inited = WICED_TRUE;
   return WWD_SUCCESS;
@@ -154,20 +150,9 @@ void wwd_thread_quit() {
     /* Rather than call host_rtos_join_thread() here, wait for stopped signal
      * from logical core running the WWD task.
      */
-// TODO: remove #if
-#if 0
-    if (xcore_receive_control_signal() != XCORE_WWD_STOPPED) {
+    if (signals_take(signals) != XCORE_WWD_STOPPED) {
       fail("Unexpected signal received");
     }
-#else
-    xcore_wwd_control_signal_t received_signal;
-    unsafe {
-      xcore_wwd_ctrl_external :> received_signal;
-    }
-    if (received_signal != XCORE_WWD_STOPPED) {
-      fail("Unexpected signal received");
-    }
-#endif
   }
 }
 
@@ -179,102 +164,96 @@ void wwd_thread_notify() {
   }
 }
 
-/** TODO: document (brief)
+/**
  * xCORE implementation of wwd_thread_func() from wwd_thread.c
+ * Handle packet rx/tx. Ensure that the wwd_tranceive_semaphore has reached 0
+ * before returning.
  */
 static void wwd_thread_func() {
   uint8_t rx_status;
   uint8_t tx_status;
   wwd_result_t result;
 
-  // Check if we were woken by interrupt
-  if ((wwd_bus_interrupt == WICED_TRUE) || (WWD_BUS_USE_STATUS_REPORT_SCHEME)) {
-    wwd_bus_interrupt = WICED_FALSE;
+  while(1) {
+    // Check if we were woken by interrupt
+    if ((wwd_bus_interrupt == WICED_TRUE) || (WWD_BUS_USE_STATUS_REPORT_SCHEME)) {
+      wwd_bus_interrupt = WICED_FALSE;
 
-    // Check if the interrupt indicated there is a packet to read
-    if (wwd_bus_packet_available_to_read() != 0) {
-      // Receive all available packets
-      do {
-        rx_status = wwd_thread_receive_one_packet();
-      } while ( rx_status != 0 );
+      // Check if the interrupt indicated there is a packet to read
+      if (wwd_bus_packet_available_to_read() != 0) {
+        // Receive all available packets
+        do {
+          rx_status = wwd_thread_receive_one_packet();
+        } while ( rx_status != 0 );
+      }
     }
-  }
 
-  // Send all the packets in the queue
-  do {
-      tx_status = wwd_thread_send_one_packet();
-  } while (tx_status != 0);
+    // Send all the packets in the queue
+    do {
+        tx_status = wwd_thread_send_one_packet();
+    } while (tx_status != 0);
 
-  // Check if we have run out of bus credits
-  if (wWd_sdpcm_get_available_credits() == 0) {
-    // Keep poking the WLAN until it gives us more credits
-    result = wwd_bus_poke_wlan();
-    wiced_assert("Poking failed!", result == WWD_SUCCESS);
-    REFERENCE_DEBUG_ONLY_VARIABLE(result); // XXX: keep?
-
-    result = host_rtos_get_semaphore(&wwd_transceive_semaphore,
-                                     (uint32_t)100, WICED_FALSE);
-  } else {
-    // Put the bus to sleep and wait for something else to do
-    if (wwd_wlan_status.keep_wlan_awake == 0) {
-      result = wwd_bus_allow_wlan_bus_to_sleep();
-      wiced_assert("Error setting wlan sleep", result == WWD_SUCCESS);
-      REFERENCE_DEBUG_ONLY_VARIABLE(result);
+    if (host_rtos_semaphore_value(&wwd_transceive_semaphore) == 0) {
+      // Nothing left to handle
+      break;
     }
-    result = host_rtos_get_semaphore(&wwd_transceive_semaphore,
-                                     (uint32_t)WWD_THREAD_POLL_TIMEOUT,
-                                     WICED_FALSE);
-  }
-  REFERENCE_DEBUG_ONLY_VARIABLE(result);
-  wiced_assert("Could not get wwd sleep semaphore\n",
-               (result == WWD_SUCCESS) || (result == WWD_TIMEOUT));
 
-  wwd_thread_poll_timeout += WWD_THREAD_POLL_TIMEOUT; // XXX: might want to have a long and short timeout that can be set here
+    // Decrement semaphore
+    host_rtos_get_semaphore(&wwd_transceive_semaphore, 0, WICED_FALSE);
 
-  if (wwd_thread_quit_flag == WICED_TRUE) {
-    // Reset the quit flag
-    wwd_thread_quit_flag = WICED_FALSE;
+    // Check if we have run out of bus credits
+    if (wWd_sdpcm_get_available_credits() == 0) {
+      // Keep poking the WLAN until it gives us more credits
+      result = wwd_bus_poke_wlan();
+      wiced_assert("Poking failed!", result == WWD_SUCCESS);
 
-    // Delete the semaphore
-    host_rtos_deinit_semaphore(&wwd_transceive_semaphore);
-
-    wwd_sdpcm_quit();
-    wwd_inited = WICED_FALSE;
-
-    /* Rather than call host_rtos_finish_thread() here, send stopped signal to
-     * logical core waiting for the WWD task to join.
-     */
-// TODO: remove #if
-#if 0
-    xcore_wwd_send_control_signal(XCORE_WWD_STOPPED);
-#else
-    unsafe {
-      xcore_wwd_ctrl_external <: XCORE_WWD_STOPPED;
+    } else {
+      // Put the bus to sleep and wait for something else to do
+      if (wwd_wlan_status.keep_wlan_awake == 0) {
+        result = wwd_bus_allow_wlan_bus_to_sleep();
+        wiced_assert("Error setting wlan sleep", result == WWD_SUCCESS);
+      }
     }
-#endif
+
+    wwd_thread_poll_timeout += WWD_THREAD_POLL_TIMEOUT; // XXX: might want to have a long and short timeout that can be set here
+
+    if (wwd_thread_quit_flag == WICED_TRUE) {
+      // Reset the quit flag
+      wwd_thread_quit_flag = WICED_FALSE;
+
+      // Delete the semaphore
+      host_rtos_deinit_semaphore(&wwd_transceive_semaphore);
+
+      wwd_sdpcm_quit();
+      wwd_inited = WICED_FALSE;
+
+      /* Rather than call host_rtos_finish_thread() here, send stopped signal to
+       * logical core waiting for the WWD task to join.
+       */
+      xcore_wwd_send_control_signal(XCORE_WWD_STOPPED);
+    }
   }
 }
 
-/** TODO: document (brief) */
+/** Notify the xcore_wwd task with a new signal event. The notification channel
+ * only needs to be sent to on the first entry put into the buffer, otherwise
+ * the ouput to the channel could block and it must never be allowed to do so.
+ */
 void xcore_wwd_send_control_signal(xcore_wwd_control_signal_t signal_to_send) {
-  unsafe {
-    xcore_wwd_ctrl_external <: signal_to_send;
+  int was_empty = signals_put(signals, signal_to_send);
+  if (was_empty) {
+    int notification = XS1_CT_END;
+    asm volatile ("outct res[%0], %1"
+                    : // No dests
+                    : "r" (signals.notification_chanend),
+                      "r" (notification));
   }
-}
-
-/** TODO: document (brief) */
-xcore_wwd_control_signal_t xcore_receive_control_signal() {
-  xcore_wwd_control_signal_t received_signal;
-  unsafe {
-    xcore_wwd_ctrl_external :> received_signal;
-  }
-  return received_signal;
 }
 
 /** TODO: document (brief) */
 [[combinable]]
 void xcore_wwd(client interface input_gpio_if i_irq,
-               streaming chanend xcore_wwd_ctrl_internal) {
+               streaming chanend notification_chanend) {
   timer t_periodic;
 
   // Get the initial timer value
@@ -286,16 +265,19 @@ void xcore_wwd(client interface input_gpio_if i_irq,
   while (1) {
     select {
       /* TODO: document (brief) */
-      case xcore_wwd_ctrl_internal :> xcore_wwd_control_signal_t ctrl_sig:
-        switch (ctrl_sig) {
-          case XCORE_WWD_START:
-            // XXX: call wwd_thread_func(); here?
-            break;
-          case XCORE_WWD_SEMAPHORE_INCREMENT:
-            if (wwd_inited) {
-              wwd_thread_func();
-            }
-            break;
+      case schkct(notification_chanend, XS1_CT_END):
+        while (!signals_is_empty(signals)) {
+          xcore_wwd_control_signal_t ctrl_sig = signals_take(signals);
+          switch (ctrl_sig) {
+            case XCORE_WWD_START:
+              // XXX: call wwd_thread_func(); here?
+              break;
+            case XCORE_WWD_SEMAPHORE_INCREMENT:
+              if (wwd_inited) {
+                wwd_thread_func();
+              }
+              break;
+          }
         }
         break;
 
