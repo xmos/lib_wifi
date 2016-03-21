@@ -35,10 +35,29 @@ void xcore_wiced_send_pbuf_to_internal(wiced_buffer_t p);
 
 #if __XC__
 
+#include "hwlock.h"
+
+/**
+ * A structure for storing notification signals for the xcore_wwd.
+ * It is empty when head == tail.
+ */
+#define NUM_SIGNALS 10
+typedef struct {
+  xcore_wwd_control_signal_t signals[NUM_SIGNALS];
+  unsigned head;
+  unsigned tail;
+  hwlock_t lock;
+  unsigned notification_chanend;
+} signals_t;
+
+xcore_wwd_control_signal_t signals_take(signals_t &signals);
+int signals_put(signals_t &signals, xcore_wwd_control_signal_t signal);
+int signals_is_empty(signals_t &signals);
+
 /** TODO: document (brief) */
 [[combinable]]
 void xcore_wwd(client interface input_gpio_if i_irq,
-               streaming chanend xcore_wwd_ctrl_internal);
+               streaming chanend notification_chanend);
 
 #endif // __XC__
 

@@ -21,7 +21,7 @@ static const unsigned wifi_bcm_wiced_spi_ss_deassert_ms = 100;
 static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsigned wifi_bcm_wiced_spi_device_index;
 
-unsafe streaming chanend xcore_wwd_ctrl_external;
+signals_t signals;
 unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
@@ -72,11 +72,10 @@ unsigned xcore_get_ticks() {
   return time;
 }
 
-#define NUM_BUFFERS 10
-
 /*
  * A structure for storing pbuf pointers. It is empty when head == tail.
  */
+#define NUM_BUFFERS 10
 typedef struct {
   pbuf_p buffers[NUM_BUFFERS];
   unsigned head;
@@ -98,7 +97,7 @@ static unsafe pbuf_p buffers_take(buffers_t &buffers) {
   return buffers.buffers[read_index];
 }
 
-static unsafe pbuf_p buffers_put(buffers_t &buffers, pbuf_p p) {
+static unsafe void buffers_put(buffers_t &buffers, pbuf_p p) {
   buffers.buffers[buffers.tail] = p;
   buffers.tail += 1;
   if (buffers.tail == NUM_BUFFERS) {
@@ -260,6 +259,70 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
   }
 }
 
+/**
+ * Initialise the pointers and allocate the lock used for protection and channel
+ * end used for notifications.
+ * The channel end is then connected to itself so only one channel end is used
+ * for notifications.
+ */
+unsafe static unsafe streaming chanend signals_init(signals_t &signals) {
+  signals.head = 0;
+  signals.tail = 0;
+  signals.lock = hwlock_alloc();
+  xassert(signals.lock && msg("No hardware locks available"));
+
+  asm volatile ("getr %0, " QUOTE(XS1_RES_TYPE_CHANEND)
+                    : "=r" (signals.notification_chanend));
+  xassert(signals.notification_chanend && msg("No notification chanend available"));
+  asm volatile ("setd res[%0], %0"
+                    : // No dests
+                    : "r" (signals.notification_chanend));
+
+  // The channel end is returned so that it can be passed to the xcore_wwd task
+  return (streaming chanend)signals.notification_chanend;
+}
+
+/**
+ * Take the signal from the head pointer and move the head pointer
+ */
+xcore_wwd_control_signal_t signals_take(signals_t &signals) {
+  hwlock_acquire(signals.lock);
+  xassert(signals.head != signals.tail);
+  xcore_wwd_control_signal_t return_value = signals.signals[signals.head];
+  signals.head += 1;
+  if (signals.head == NUM_SIGNALS) {
+    signals.head = 0;
+  }
+  hwlock_release(signals.lock);
+  return return_value;
+}
+
+/**
+ * Insert the specified signal at the tail pointer and move the tail pointer.
+ * The insertion only happens if the list is currently empty or the signal
+ * type is different.
+ * Returns whether the buffer was empty before the insertion.
+ */
+int signals_put(signals_t &signals, xcore_wwd_control_signal_t signal) {
+  hwlock_acquire(signals.lock);
+  int was_empty = (signals.head == signals.tail);
+  if (signals.signals[signals.tail] != signal || was_empty) {
+    signals.signals[signals.tail] = signal;
+    signals.tail += 1;
+    if (signals.tail == NUM_SIGNALS) {
+      signals.tail = 0;
+    }
+  }
+  xassert(signals.head != signals.tail);
+  hwlock_release(signals.lock);
+  return was_empty;
+}
+
+int signals_is_empty(signals_t &signals){
+  return (signals.head == signals.tail);
+}
+
+
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
@@ -269,7 +332,11 @@ void wifi_broadcom_wiced_spi(
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs) {
 
-  streaming chan c_xcore_wwd_ctrl;
+  unsafe streaming chanend notification_chanend;
+  unsafe {
+    notification_chanend = signals_init(signals);
+  }
+
   streaming chan c_xcore_wwd_pbuf;
 
   par {
@@ -277,7 +344,6 @@ void wifi_broadcom_wiced_spi(
     // Start the interface task
     {
       unsafe {
-        xcore_wwd_ctrl_external = (unsafe streaming chanend)c_xcore_wwd_ctrl;
         i_fs_global = i_fs;
         wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
                                        i_data, i_spi, spi_device_index,
@@ -293,8 +359,8 @@ void wifi_broadcom_wiced_spi(
     {
       unsafe {
         xcore_wwd_pbuf_external = (unsafe streaming chanend)c_xcore_wwd_pbuf;
+        xcore_wwd(i_irq, (streaming chanend)notification_chanend);
       }
-      xcore_wwd(i_irq, c_xcore_wwd_ctrl);
     }
   }
 }
