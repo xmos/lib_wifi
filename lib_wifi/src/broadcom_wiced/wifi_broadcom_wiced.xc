@@ -179,8 +179,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal(
           result = (wifi_res_t)xcore_wifi_get_radio_mac_address(&local_mac);
         }
         memcpy(mac_address, &local_mac, 6);
-        // debug_printf doesn't support "%02X" formatting
-        debug_printf("WiFi MAC address: %x:%x:%x:%x:%x:%x\n",
+        debug_printf("WiFi MAC address: %02X:%02X:%02X:%02X:%02X:%02X\n",
                      mac_address[0], mac_address[1], mac_address[2],
                      mac_address[3], mac_address[4], mac_address[5]);
         break;
