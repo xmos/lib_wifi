@@ -125,6 +125,13 @@ void wifi_broadcom_wiced_spi(
 
 // NOTE: named to allow future SDIO support: wifi_broadcom_wiced_sdio()
 
+/** TODO: document */
+void xtcp_lwip_wifi(chanend xtcp[n], size_t n,
+                    client interface wifi_hal_if i_wifi_hal,
+                    client interface wifi_network_config_if i_wifi_config,
+                    client interface xtcp_pbuf_if i_wifi_data,
+                    xtcp_ipconfig_t &ipconfig);
+
 #endif // __XC__
 
 #endif // __wifi_h__
