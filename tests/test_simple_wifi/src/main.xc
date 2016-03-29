@@ -141,7 +141,7 @@ typedef enum {
 int main(void) {
   interface wifi_hal_if i_hal[2];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
-  interface wifi_network_data_if i_data;
+  interface xtcp_pbuf_if i_data;
   interface spi_master_if i_spi[1];
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];

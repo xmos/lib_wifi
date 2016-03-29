@@ -17,6 +17,7 @@
 #include <xs1.h>
 #include <stddef.h>
 #include "xc_broadcom_wiced_includes.h"
+#include "xtcp.h"
 #include "ethernet.h"
 #include "spi.h"
 #include "gpio.h"
@@ -27,8 +28,6 @@ typedef enum {
   WIFI_SUCCESS, ///< TODO: document
   WIFI_ERROR    ///< TODO: document
 } wifi_res_t;
-
-typedef struct pbuf * unsafe pbuf_p;
 
 /** Module HAL - similar to smi.h?
  * TODO: document
@@ -115,28 +114,10 @@ typedef interface wifi_network_config_if {
   // TODO: Functions to handle clients connecting when we're an AP...
 } wifi_network_config_if;
 
-/** WiFi/xtcp data interface - mii.h equivalent
- * TODO: document
- */
-typedef interface wifi_network_data_if {
-
-  /** TODO: document */
-  [[clears_notification]]
-  pbuf_p receive_packet();
-
-  [[notification]]
-  slave void packet_ready();
-
-  /** TODO: document */
-  void send_packet(pbuf_p p);
-
-  // TODO: Add function to notify clients of received packets
-} wifi_network_data_if;
-
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface wifi_network_data_if i_data,
+    server interface xtcp_pbuf_if i_data,
     client interface spi_master_if i_spi,
     unsigned spi_device_index,
     client interface input_gpio_if i_irq,

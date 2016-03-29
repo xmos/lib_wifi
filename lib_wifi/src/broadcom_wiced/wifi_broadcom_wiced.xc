@@ -115,7 +115,7 @@ static int buffers_is_empty(buffers_t &buffers){
 static unsafe void wifi_broadcom_wiced_spi_internal(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface wifi_network_data_if i_data,
+    server interface xtcp_pbuf_if i_data,
     client interface spi_master_if i_spi,
     unsigned spi_device_index,
     streaming chanend c_xcore_wwd_pbuf) {
@@ -325,7 +325,7 @@ int signals_is_empty(signals_t &signals){
 void wifi_broadcom_wiced_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface wifi_network_data_if i_data,
+    server interface xtcp_pbuf_if i_data,
     client interface spi_master_if i_spi,
     unsigned spi_device_index,
     client interface input_gpio_if i_irq,
