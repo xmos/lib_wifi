@@ -150,6 +150,7 @@ void print_help() {
   printf("    A default IP of 'localhost' and a default port of 10234 are used\n");
   printf("    if not specified. If only one argument is passed it is assumed to\n");
   printf("    be the port and the IP address is assumed to be 'localhost'\n");
+  // TODO: print scan
   printf(" join : join a network\n");
   printf(" d|disconnect : disconnect current connection\n");
   printf(" h|?|help : print this help message\n");

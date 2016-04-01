@@ -97,7 +97,7 @@ typedef interface wifi_network_config_if {
   size_t get_num_networks();
 
   /** TODO: document */
-  const wiced_ssid_t * unsafe get_network_ssid(size_t index);
+  const wiced_ssid_t * unsafe get_network_ssid(size_t index); // FIXME: return a lib_wifi type
 
   /** TODO: document */
   void join_network(size_t index, uint8_t security_key[key_length],
