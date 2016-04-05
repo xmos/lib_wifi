@@ -151,7 +151,7 @@ int main(void) {
   interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface xtcp_pbuf_if i_data;
 #if USE_ASYNC_SPI
-  interface spi_master_async_if i_spi[1];
+  interface spi_master_async_if i_async_spi[1];
 #else
   interface spi_master_if i_spi[1];
 #endif
@@ -164,24 +164,25 @@ int main(void) {
   par {
     xscope_host_data(c_xscope_data_in);
 
-    on tile[1]:                process_xscope(c_xscope_data_in, i_conf[CONFIG_XSCOPE]);
+    on tile[1]:                process_xscope(c_xscope_data_in,
+                                              i_conf[CONFIG_XSCOPE]);
 #if USE_ASYNC_SPI
-    on tile[1]:                wifi_broadcom_wiced_asyc_spi(i_hal, 2, i_conf, NUM_CONFIG,
-                                                            i_data, i_spi[0], 0,
-                                                            i_inputs[0], i_fs[0]);
-#else
-    on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, NUM_CONFIG,
-                                                       i_data, i_spi[0], 0,
-                                                       i_inputs[0], i_fs[0]);
-#endif
-    on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]);
-#if USE_ASYNC_SPI
-    on tile[1]: spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1,
-                                 clk0, clk1);
+    on tile[1]: spi_master_async(i_async_spi, 1, p_sclk, p_mosi, p_miso, p_ss,
+                                 1, clk0, clk1);
+    on tile[1]:                wifi_broadcom_wiced_asyc_spi(i_hal, 2, i_conf,
+                                                            NUM_CONFIG, i_data,
+                                                            i_async_spi[0], 0,
+                                                            i_inputs[0],
+                                                            i_fs[0]);
 #else
     on tile[1]: [[distribute]] spi_master(i_spi, 1, p_sclk, p_mosi, p_miso,
                                           p_ss, 1, null);
+    on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf,
+                                                       NUM_CONFIG, i_data,
+                                                       i_spi[0], 0, i_inputs[0],
+                                                       i_fs[0]);
 #endif
+    on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]);
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
                                               i_conf[CONFIG_XTCP],
