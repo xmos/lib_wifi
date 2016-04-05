@@ -17,7 +17,7 @@
 #include "debug_print.h"
 #include "xassert.h"
 
-#define USE_ASYNC_SPI 0
+#define USE_ASYNC_SPI 1
 #define USE_SLEEP_CLOCK 0
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
