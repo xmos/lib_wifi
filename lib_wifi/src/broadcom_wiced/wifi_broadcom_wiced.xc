@@ -27,7 +27,7 @@ static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsafe client interface spi_master_async_if i_wifi_bcm_wiced_async_spi;
 static unsigned wifi_bcm_wiced_spi_device_index;
 static wifi_spi_type_t wifi_spi_master_type_in_use;
-#define WIFI_MAX_ASYNC_SPI_BUF_LEN 1500
+#define WIFI_MAX_ASYNC_SPI_BUF_LEN 2000
 
 signals_t signals;
 unsafe streaming chanend xcore_wwd_pbuf_external;
