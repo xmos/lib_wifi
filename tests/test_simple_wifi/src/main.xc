@@ -17,6 +17,8 @@
 #include "debug_print.h"
 #include "xassert.h"
 
+#define USE_ASYNC_SPI 0
+
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
 // These ports are used for the SPI master
@@ -34,6 +36,11 @@ fl_QSPIPorts qspi_flash_ports = {
   PORT_SQI_SIO,
   on tile[0]: XS1_CLKBLK_1
 };
+
+#if USE_ASYNC_SPI
+clock clk0 = on tile[1]: XS1_CLKBLK_1;
+clock clk1 = on tile[1]: XS1_CLKBLK_2;
+#endif
 
 /* IP Config - change this to suit your network
  * Leave with all 0 values to use DHCP/AutoIP
@@ -142,7 +149,11 @@ int main(void) {
   interface wifi_hal_if i_hal[2];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface xtcp_pbuf_if i_data;
+#if USE_ASYNC_SPI
+  interface spi_master_async_if i_spi[1];
+#else
   interface spi_master_if i_spi[1];
+#endif
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
   chan c_xscope_data_in;
@@ -153,12 +164,23 @@ int main(void) {
     xscope_host_data(c_xscope_data_in);
 
     on tile[1]:                process_xscope(c_xscope_data_in, i_conf[CONFIG_XSCOPE]);
+#if USE_ASYNC_SPI
+    on tile[1]:                wifi_broadcom_wiced_asyc_spi(i_hal, 2, i_conf, NUM_CONFIG,
+                                                            i_data, i_spi[0], 0,
+                                                            i_inputs[0], i_fs[0]);
+#else
     on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf, NUM_CONFIG,
                                                        i_data, i_spi[0], 0,
                                                        i_inputs[0], i_fs[0]);
+#endif
     on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]);
+#if USE_ASYNC_SPI
+    on tile[1]: spi_master_async(i_spi, 1, p_sclk, p_mosi, p_miso, p_ss, 1,
+                                 clk0, clk1);
+#else
     on tile[1]: [[distribute]] spi_master(i_spi, 1, p_sclk, p_mosi, p_miso,
                                           p_ss, 1, null);
+#endif
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
                                               i_conf[CONFIG_XTCP],
