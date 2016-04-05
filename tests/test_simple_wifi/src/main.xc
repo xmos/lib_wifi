@@ -18,6 +18,7 @@
 #include "xassert.h"
 
 #define USE_ASYNC_SPI 0
+#define USE_SLEEP_CLOCK 0
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
@@ -185,7 +186,9 @@ int main(void) {
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
                                               i_conf[CONFIG_XTCP],
                                               i_data, ipconfig);
-    // on tile[0]:                sleep_clock_gen();
+#if USE_SLEEP_CLOCK
+    on tile[0]:                sleep_clock_gen();
+#endif
     on tile[0]:                filesystem_tasks(i_fs);
   }
 
