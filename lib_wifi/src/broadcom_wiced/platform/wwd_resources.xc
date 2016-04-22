@@ -141,11 +141,11 @@ wwd_result_t host_platform_resource_read_indirect(wwd_resource_t resource,
          * returning the actual number of bytes read in size_out
          */
         size_t local_size_out = *size_out;
-        debug_printf("Attempting to read %d bytes... ", buffer_size);
+        // debug_printf("Attempting to read %d bytes... ", buffer_size);
         fs_result = i_fs_global.read((uint8_t *)buffer, buffer_size, buffer_size,
                                      local_size_out);
         *size_out = local_size_out;
-        debug_printf("read %d bytes\n", local_size_out);
+        // debug_printf("read %d bytes\n", local_size_out);
         if (fs_result != FS_RES_OK) {
           fail("Error reading from filesystem\n");
           return WWD_PARTIAL_RESULTS;
