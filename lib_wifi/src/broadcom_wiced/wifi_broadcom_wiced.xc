@@ -37,9 +37,10 @@ unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
 // Function prototype for xcore wrapper function found in xcore_wrappers.c
-void xcore_wifi_scan_networks();
+size_t xcore_wifi_scan_networks();
 unsigned xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
                                           size_t key_length);
+int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
@@ -214,9 +215,6 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
   buffers_t rx_buffers;
   buffers_init(rx_buffers);
 
-  wiced_ssid_t ssids[] = { {6, "SSID_1"}, {6, "SSID_2"} };
-  size_t num_active_networks = 2;
-
   while (1) {
     select {
       // WiFi HAL interface
@@ -284,33 +282,36 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
       case i_conf[int i].set_networking_mode():
         break;
 
-      case i_conf[int i].scan_for_networks():
+      case i_conf[int i].scan_for_networks() -> size_t num_networks:
         debug_printf("Internal scan_for_networks\n");
-        xcore_wifi_scan_networks();
+        num_networks = xcore_wifi_scan_networks();
         break;
 
-      case i_conf[int i].get_num_networks() -> size_t num_networks:
-        debug_printf("Internal get_num_networks\n");
-        num_networks = num_active_networks;
-        break;
-
-      case i_conf[int i].get_network_ssid(size_t index) -> const wiced_ssid_t * unsafe ssid:
-        if (index < num_active_networks) {
-          ssid = &ssids[index];
-        } else {
-          ssid = NULL;
-        }
-        break;
-
-      case i_conf[int i].join_network(size_t index,
+      case i_conf[int i].join_network_by_index(size_t index,
                                       uint8_t security_key[key_length],
                                       size_t key_length) -> unsigned result:
-        debug_printf("join_network\n");
+        debug_printf("join_network %d\n", index);
         xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
                msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
         memcpy(local_key, security_key, key_length);
         result = xcore_wifi_join_network_at_index(index, local_key, key_length);
+        break;
+
+      case i_conf[int i].join_network_by_name(const char * unsafe name,
+                                      uint8_t security_key[key_length],
+                                      size_t key_length) -> unsigned result:
+        debug_printf("join_network %s\n", name);
+        xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
+               msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
+        uint8_t local_key[WIFI_MAX_KEY_LENGTH];
+        memcpy(local_key, security_key, key_length);
+        int index = xcore_wifi_get_network_index(name);
+        if (index != -1) {
+          result = xcore_wifi_join_network_at_index(index, local_key, key_length);
+        } else {
+          debug_printf("Invalid network name\n");
+        }
         break;
 
       case i_conf[int i].leave_network(size_t index):

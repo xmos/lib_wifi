@@ -92,16 +92,14 @@ typedef interface wifi_network_config_if {
 
   // Client mode functions
   /** TODO: document */
-  void scan_for_networks();
+  size_t scan_for_networks();
 
   /** TODO: document */
-  size_t get_num_networks();
+  unsigned join_network_by_name(const char * unsafe name, uint8_t security_key[key_length],
+                        size_t key_length);
 
   /** TODO: document */
-  const wiced_ssid_t * unsafe get_network_ssid(size_t index); // FIXME: return a lib_wifi type
-
-  /** TODO: document */
-  unsigned join_network(size_t index, uint8_t security_key[key_length],
+  unsigned join_network_by_index(size_t index, uint8_t security_key[key_length],
                         size_t key_length);
 
   /** TODO: document */
