@@ -401,7 +401,7 @@ int main(void) {
                                                        i_spi[0], 0, i_inputs[0],
                                                        i_fs[0]);
 #endif
-    on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]);
+    on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]); // TODO: remove
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
                                               i_conf[CONFIG_XTCP],

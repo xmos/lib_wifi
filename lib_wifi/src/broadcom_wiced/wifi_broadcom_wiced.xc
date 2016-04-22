@@ -87,7 +87,7 @@ unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
                                              1000, // TODO: max this out - BCM supports 50MHz (currently breaks above 1MHz)
                                              wifi_bcm_wiced_spi_mode);
       if (BUS_READ == direction) {
-        // Reading from the bus TO buffer, send zeros as data
+        // Reading from the bus TO buffer
         for (int i = 0; i < buffer_length; i++) {
           buffer[i] = i_wifi_bcm_wiced_spi.transfer8(buffer[i]);
         }
@@ -108,7 +108,7 @@ unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
                                                    50000, // FIXME: just a starting point
                                                    wifi_bcm_wiced_spi_mode);
       if (BUS_READ == direction) {
-        // Reading from the bus TO buffer, send zeros as data
+        // Reading from the bus TO buffer
         xassert(buffer_length <= WIFI_MAX_ASYNC_SPI_BUF_LEN &&
           msg("WWD attempting SPI transaction with a buffer that's too big"));
         i_wifi_bcm_wiced_async_spi.init_transfer_array_8(move(read_buf),
@@ -139,6 +139,7 @@ unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
     case WIFI_FAST_SPI:
       spi_fast_init(*p_wifi_bcm_wiced_spi);
       if (BUS_READ == direction) {
+        // Reading from the bus TO buffer
         spi_fast(buffer_length, (char *)buffer, *p_wifi_bcm_wiced_spi, SPI_READ);
       } else {
         spi_fast(buffer_length, (char *)buffer, *p_wifi_bcm_wiced_spi, SPI_WRITE);
