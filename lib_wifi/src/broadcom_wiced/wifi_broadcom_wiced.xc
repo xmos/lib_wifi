@@ -300,15 +300,19 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         result = xcore_wifi_join_network_at_index(index, local_key, key_length);
         break;
 
-      case i_conf[int i].join_network_by_name(const char * unsafe name,
+      case i_conf[int i].join_network_by_name(char name[SSID_NAME_SIZE],
                                       uint8_t security_key[key_length],
                                       size_t key_length) -> unsigned result:
-        debug_printf("join_network %s\n", name);
         xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
                msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
         memcpy(local_key, security_key, key_length);
-        int index = xcore_wifi_get_network_index(name);
+
+        char local_name[SSID_NAME_SIZE];
+        memcpy(local_name, name, SSID_NAME_SIZE);
+        debug_printf("join_network %s\n", local_name);
+
+        int index = xcore_wifi_get_network_index(local_name);
         if (index != -1) {
           result = xcore_wifi_join_network_at_index(index, local_key, key_length);
         } else {
