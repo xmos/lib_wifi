@@ -8,6 +8,9 @@
 #include "xassert.h"
 #include "debug_print.h"
 #include <string.h>
+#include "timer.h"
+
+static int scan_active = 0;
 
 void* wwd_scan_result_handler(const wwd_event_header_t* event_header,
                               const uint8_t* event_data,
@@ -141,6 +144,7 @@ void scan_result_handler(wiced_scan_result_t **result_ptr,
       } else if (record_count == WIFI_MAX_SCAN_RESULTS) {
         debug_printf("Aborting scan as maximum number of results reached\n");
         wwd_wifi_abort_scan(); // TODO: check return code
+        scan_active = 0;
       }
     }
   } else {
@@ -152,6 +156,7 @@ void scan_result_handler(wiced_scan_result_t **result_ptr,
       WPRINT_APP_INFO(("%3d ", i));
       print_scan_result(&scan_results[i]);
     }
+    scan_active = 0;
   }
 }
 
@@ -175,16 +180,33 @@ void scan_result_callback_wrapper(
 
 wiced_scan_result_t *scan_result_ptr;
 
-void xcore_wifi_scan_networks() {
+size_t xcore_wifi_scan_networks() {
   // Clear any previous scan results
   memset(&scan_results, 0, sizeof(wiced_scan_result_t)*record_count);
   record_count = 0;
   scan_result_ptr = &scan_results[record_count];
   scan_start_time = host_rtos_get_time();
 
+  scan_active = 1;
   wwd_wifi_scan( WICED_SCAN_TYPE_ACTIVE, WICED_BSS_TYPE_ANY, NULL, NULL,
     NULL, NULL, CALLBACK_SCAN_RESULT_FUNC, &scan_result_ptr,
     NULL, WWD_STA_INTERFACE);
+
+  while (scan_active) {
+    delay_microseconds(10);
+  }
+  return record_count;
+}
+
+int xcore_wifi_get_network_index(const char *name) {
+  size_t name_length = strlen(name);
+  for (int i = 0; i < record_count; i++) {
+    if ((scan_results[i].SSID.length == name_length) &&
+        (memcmp(name, scan_results[i].SSID.value, scan_results[i].SSID.length) == 0)) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 unsigned xcore_wifi_join_network_at_index(size_t index,
