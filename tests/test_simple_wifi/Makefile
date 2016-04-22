@@ -18,7 +18,7 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-GEN_XCC_FLAGS = -g -O0 -save-temps -fxscope -DLWIP_XTCP=1 -DXASSERT_ENABLE_ASSERTIONS=1 -DXASSERT_ENABLE_DEBUG=1 -fno-inline-functions
+GEN_XCC_FLAGS = -g -Os -save-temps -fxscope -DLWIP_XTCP=1 -DXASSERT_ENABLE_ASSERTIONS=1 -DXASSERT_ENABLE_DEBUG=1 -fno-inline-functions
 
 XCC_FLAGS = # Using GEN_XCC_FLAGS to allow for XCC_C_FLAGS to tidy lib_xtcp
 XCC_C_FLAGS = $(GEN_XCC_FLAGS) -Wno-ignored-attributes -Wno-typedef-redefinition
@@ -31,7 +31,7 @@ ENABLE_STAGED_BUILD = 1
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_wifi lib_logging lib_spi lib_gpio lib_filesystem
+USED_MODULES = lib_wifi lib_logging lib_spi lib_spi_fast lib_gpio lib_filesystem
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

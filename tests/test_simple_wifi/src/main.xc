@@ -17,16 +17,31 @@
 #include "debug_print.h"
 #include "xassert.h"
 
-#define USE_ASYNC_SPI 1
+#define USE_FAST_SPI 1
+#define USE_ASYNC_SPI 0
 #define USE_SLEEP_CLOCK 0
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
+#if USE_FAST_SPI
+spi_fast_ports p_fast_spi = {
+  on tile[1]: XS1_PORT_1N,
+  on tile[1]: XS1_PORT_1M,
+  on tile[1]: XS1_PORT_1L,
+  on tile[1]: XS1_PORT_4E,
+  0, // CS on bit 0 of port 4E
+  on tile[1]: XS1_CLKBLK_3,
+  1, // 100/4 (2*2n)
+  1000,
+  0
+};
+#else
 // These ports are used for the SPI master
 out buffered port:32 p_sclk  = on tile[1]:   XS1_PORT_1N;
 out          port    p_ss[1] = on tile[1]: { XS1_PORT_4E }; // Bit 0
 in  buffered port:32 p_miso  = on tile[1]:   XS1_PORT_1M;
 out buffered port:32 p_mosi  = on tile[1]:   XS1_PORT_1L;
+#endif
 
 // Input port used for IRQ interrupt line
 in port p_irq = on tile[1]: XS1_PORT_4F;
@@ -166,9 +181,15 @@ int main(void) {
 
     on tile[1]:                process_xscope(c_xscope_data_in,
                                               i_conf[CONFIG_XSCOPE]);
-#if USE_ASYNC_SPI
-    on tile[1]: spi_master_async(i_async_spi, 1, p_sclk, p_mosi, p_miso, p_ss,
-                                 1, clk0, clk1);
+#if USE_FAST_SPI
+    on tile[1]:                wifi_broadcom_wiced_fast_spi(i_hal, 2, i_conf,
+                                                            NUM_CONFIG, i_data,
+                                                            p_fast_spi,
+                                                            i_inputs[0],
+                                                            i_fs[0]);
+#elif USE_ASYNC_SPI
+    on tile[1]:                spi_master_async(i_async_spi, 1, p_sclk, p_mosi,
+                                                p_miso, p_ss, 1, clk0, clk1);
     on tile[1]:                wifi_broadcom_wiced_asyc_spi(i_hal, 2, i_conf,
                                                             NUM_CONFIG, i_data,
                                                             i_async_spi[0], 0,

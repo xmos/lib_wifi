@@ -20,6 +20,7 @@
 #include "xtcp.h"
 #include "ethernet.h"
 #include "spi.h"
+#include "spi_fast.h"
 #include "gpio.h"
 #include "filesystem.h"
 
@@ -129,6 +130,14 @@ void wifi_broadcom_wiced_asyc_spi(
     server interface xtcp_pbuf_if i_data,
     client interface spi_master_async_if i_spi,
     unsigned spi_device_index,
+    client interface input_gpio_if i_irq,
+    client interface fs_basic_if i_fs);
+
+void wifi_broadcom_wiced_fast_spi(
+    server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
+    server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
+    server interface xtcp_pbuf_if i_data,
+    spi_fast_ports &p_spi,
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs);
 
