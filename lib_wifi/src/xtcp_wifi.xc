@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #include <stddef.h>
 #include "wifi.h"
 #include "xtcp.h"
