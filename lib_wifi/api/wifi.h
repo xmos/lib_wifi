@@ -95,7 +95,7 @@ typedef interface wifi_network_config_if {
   size_t scan_for_networks();
 
   /** TODO: document */
-  unsigned join_network_by_name(const char * unsafe name, uint8_t security_key[key_length],
+  unsigned join_network_by_name(char name[SSID_NAME_SIZE], uint8_t security_key[key_length],
                         size_t key_length);
 
   /** TODO: document */
