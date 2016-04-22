@@ -101,8 +101,8 @@ typedef interface wifi_network_config_if {
   const wiced_ssid_t * unsafe get_network_ssid(size_t index); // FIXME: return a lib_wifi type
 
   /** TODO: document */
-  void join_network(size_t index, uint8_t security_key[key_length],
-                    size_t key_length);
+  unsigned join_network(size_t index, uint8_t security_key[key_length],
+                        size_t key_length);
 
   /** TODO: document */
   void leave_network(size_t index); // can you be connected to more than one?
