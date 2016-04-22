@@ -23,7 +23,7 @@ typedef enum {
 } wifi_spi_type_t;
 
 static const unsigned wifi_bcm_wiced_spi_speed_khz = 1000; // TODO: remove or use for both sync and async
-static const spi_mode_t wifi_bcm_wiced_spi_mode = SPI_MODE_1; // XXX: M3 ARM code appears to use SPI_MODE_3, LPC17xx code appears to use SPI_MODE_0...
+static const spi_mode_t wifi_bcm_wiced_spi_mode = SPI_MODE_3;
 static const unsigned wifi_bcm_wiced_spi_ss_deassert_ms = 100;
 static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsafe client interface spi_master_async_if i_wifi_bcm_wiced_async_spi;
