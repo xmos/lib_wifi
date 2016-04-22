@@ -320,22 +320,6 @@ void process_xscope(chanend xscope_data_in,
         if (strcmp(buffer, "scan") == 0) {
           i_conf.scan_for_networks();
 
-        } else if (strcmp(buffer, "show") == 0) {
-          size_t num_networks = i_conf.get_num_networks();
-          debug_printf("Printing %d networks\n", num_networks);
-          for (size_t i = 0; i < num_networks; i++) {
-            const wiced_ssid_t * unsafe ssid = i_conf.get_network_ssid(i);
-            // The SSID name is not guaranteed to be null-terminated
-            printstr("Network");
-            printint(i);
-            printstr(": SSID: ");
-            unsafe {
-              for (size_t c = 0; c < ssid->length; c++) {
-                printchar(ssid->value[c]);
-              }
-            }
-            printstr("\n");
-          }
         } else if (strcmp(buffer, "join") == 0) {
           xscope_data_from_host(xscope_data_in, buffer, bytesRead);
           xassert(bytesRead && msg("Scan index data too short\n"));
@@ -344,7 +328,7 @@ void process_xscope(chanend xscope_data_in,
           xassert(bytesRead <= WIFI_MAX_KEY_LENGTH &&
                   msg("Security key data too long\n"));
           // -1 due to \n being sent
-          i_conf.join_network(index, buffer, bytesRead-1);
+          i_conf.join_network_by_index(index, buffer, bytesRead-1);
         }
       }
       break;
