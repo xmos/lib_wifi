@@ -3,7 +3,7 @@ VERSION = 0.0.1
 # lib_xtcp must be built with LWIP support when using Broadcom WICED WiFi
 LWIP_XTCP=1
 
-DEPENDENT_MODULES = lib_xtcp(>=5.1.0) lib_ethernet(>=3.0.3) lib_spi(>=3.0.1) lib_gpio(>=1.0.0) lib_filesystem(>=0.0.1) lib_xassert(>=2.0.0) lib_logging(>=2.0.0) lib_locks(>=2.0.2) lib_spi_fast(>=0.0.1)
+DEPENDENT_MODULES = lib_xtcp(>=5.1.0) lib_ethernet(>=3.0.3) lib_spi(>=3.0.1) lib_gpio(>=1.0.0) lib_filesystem(>=0.0.1) lib_xassert(>=2.0.0) lib_logging(>=2.0.0) lib_locks(>=2.0.2)
 
 WICED_SDK_VERSION ?= 3.3.1
 WICED_BUS ?= SPI
@@ -51,3 +51,5 @@ GEN_MODULE_FLAGS = -DWICED_WLAN_CHIP=$(WICED_WLAN_CHIP) -DWICED_WLAN_CHIP_REVISI
 MODULE_XCC_C_FLAGS = $(XCC_C_FLAGS) -DALWAYS_INLINE="" $(GEN_MODULE_FLAGS)
 MODULE_XCC_XC_FLAGS = $(XCC_XC_FLAGS) -Wno-unknown-pragmas $(GEN_MODULE_FLAGS)
 # NOTE: Not setting -DWWD_DIRECT_RESOURCES in MODULE_XCC_C_FLAGS
+
+XCC_FLAGS_wifi_spi.xc = -O2

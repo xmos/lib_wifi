@@ -5,7 +5,7 @@
 #include "wifi_broadcom_wiced.h"
 #include "wifi.h"
 #include "spi.h"
-#include "spi_fast.h"
+#include "wifi_spi.h"
 #include "gpio.h"
 #include "xc2compat.h"
 #include "xc_broadcom_wiced_includes.h"
@@ -19,7 +19,7 @@
 typedef enum {
   WIFI_SYNCHRONOUS_SPI,
   WIFI_ASYNCHRONOUS_SPI,
-  WIFI_FAST_SPI
+  WIFI_BUILTIN_SPI
 } wifi_spi_type_t;
 
 static const unsigned wifi_bcm_wiced_spi_speed_khz = 1000; // TODO: remove or use for both sync and async
@@ -28,7 +28,7 @@ static const unsigned wifi_bcm_wiced_spi_ss_deassert_ms = 100;
 static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
 static unsafe client interface spi_master_async_if i_wifi_bcm_wiced_async_spi;
 static unsigned wifi_bcm_wiced_spi_device_index;
-static spi_fast_ports * unsafe p_wifi_bcm_wiced_spi;
+static wifi_spi_ports * unsafe p_wifi_bcm_wiced_spi;
 static wifi_spi_type_t wifi_spi_master_type_in_use;
 #define WIFI_MAX_ASYNC_SPI_BUF_LEN 2000
 
@@ -51,12 +51,12 @@ unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
     case WIFI_ASYNCHRONOUS_SPI:
       i_wifi_bcm_wiced_async_spi.drive_1bit_of_ss_port(0, 2, line_state);
       break;
-    case WIFI_FAST_SPI:
-      drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
+    case WIFI_BUILTIN_SPI:
+      wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
       break;
     default:
       unreachable("Must be WIFI_SYNCHRONOUS_SPI, WIFI_ASYNCHRONOUS_SPI, or"
-                  "WIFI_FAST_SPI");
+                  "WIFI_BUILTIN_SPI");
       break;
   }
 }
@@ -69,12 +69,12 @@ unsafe void xcore_wiced_drive_reset_line(uint32_t line_state) {
     case WIFI_ASYNCHRONOUS_SPI:
       i_wifi_bcm_wiced_async_spi.drive_1bit_of_ss_port(0, 1, line_state);
       break;
-    case WIFI_FAST_SPI:
-      drive_cs_port_now(*p_wifi_bcm_wiced_spi, 1, line_state);
+    case WIFI_BUILTIN_SPI:
+      wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 1, line_state);
       break;
     default:
       unreachable("Must be WIFI_SYNCHRONOUS_SPI, WIFI_ASYNCHRONOUS_SPI, or"
-                  "WIFI_FAST_SPI");
+                  "WIFI_BUILTIN_SPI");
       break;
   }
 }
@@ -137,18 +137,20 @@ unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
       }
       i_wifi_bcm_wiced_async_spi.end_transaction(wifi_bcm_wiced_spi_ss_deassert_ms);
       break;
-    case WIFI_FAST_SPI:
-      spi_fast_init(*p_wifi_bcm_wiced_spi);
+    case WIFI_BUILTIN_SPI:
+      wifi_spi_init(*p_wifi_bcm_wiced_spi);
       if (BUS_READ == direction) {
         // Reading from the bus TO buffer
-        spi_fast(buffer_length, (char *)buffer, *p_wifi_bcm_wiced_spi, SPI_READ);
+        wifi_spi_transfer(buffer_length, (char *)buffer,
+                          *p_wifi_bcm_wiced_spi, WIFI_SPI_READ);
       } else {
-        spi_fast(buffer_length, (char *)buffer, *p_wifi_bcm_wiced_spi, SPI_WRITE);
+        wifi_spi_transfer(buffer_length, (char *)buffer,
+                          *p_wifi_bcm_wiced_spi, WIFI_SPI_WRITE);
       }
       break;
     default:
       unreachable("Must be WIFI_SYNCHRONOUS_SPI, WIFI_ASYNCHRONOUS_SPI, or"
-                  "WIFI_FAST_SPI");
+                  "WIFI_BUILTIN_SPI");
       break;
   }
 }
@@ -498,11 +500,11 @@ void wifi_broadcom_wiced_asyc_spi(
   }
 }
 
-void wifi_broadcom_wiced_fast_spi(
+void wifi_broadcom_wiced_builtin_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
     server interface xtcp_pbuf_if i_data,
-    spi_fast_ports &p_spi,
+    wifi_spi_ports &p_spi,
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs) {
 
@@ -520,7 +522,7 @@ void wifi_broadcom_wiced_fast_spi(
       unsafe {
         i_fs_global = i_fs;
         // Save the SPI bus details for use from wwd_spi functions
-        wifi_spi_master_type_in_use = WIFI_FAST_SPI;
+        wifi_spi_master_type_in_use = WIFI_BUILTIN_SPI;
         p_wifi_bcm_wiced_spi = &p_spi;
         wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
                                          i_data, c_xcore_wwd_pbuf);

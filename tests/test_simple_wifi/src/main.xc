@@ -17,7 +17,7 @@
 #include "debug_print.h"
 #include "xassert.h"
 
-#define USE_FAST_SPI 1
+#define USE_WIFI_BUILTIN_SPI 1
 #define USE_ASYNC_SPI 0
 #define USE_SLEEP_CLOCK 0
 #define USE_UDP_REFLECTOR 1
@@ -34,8 +34,8 @@ enum flag_status {TRUE=1, FALSE=0};
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
-#if USE_FAST_SPI
-spi_fast_ports p_fast_spi = {
+#if USE_WIFI_BUILTIN_SPI
+wifi_spi_ports p_wifi_spi = {
   on tile[1]: XS1_PORT_1N,
   on tile[1]: XS1_PORT_1M,
   on tile[1]: XS1_PORT_1L,
@@ -379,12 +379,13 @@ int main(void) {
 
     on tile[1]:                process_xscope(c_xscope_data_in,
                                               i_conf[CONFIG_XSCOPE]);
-#if USE_FAST_SPI
-    on tile[1]:                wifi_broadcom_wiced_fast_spi(i_hal, 2, i_conf,
-                                                            NUM_CONFIG, i_data,
-                                                            p_fast_spi,
-                                                            i_inputs[0],
-                                                            i_fs[0]);
+#if USE_WIFI_BUILTIN_SPI
+    on tile[1]:                wifi_broadcom_wiced_builtin_spi(i_hal, 2,
+                                                               i_conf, NUM_CONFIG,
+                                                               i_data,
+                                                               p_wifi_spi,
+                                                               i_inputs[0],
+                                                               i_fs[0]);
 #elif USE_ASYNC_SPI
     on tile[1]:                spi_master_async(i_async_spi, 1, p_sclk, p_mosi,
                                                 p_miso, p_ss, 1, clk0, clk1);
