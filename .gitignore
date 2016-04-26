@@ -16,4 +16,4 @@
 Installs/*
 test_results.csv
 *.log
-**/WICED-SDK*/**
+**/broadcom_wiced/sdk*/**
