@@ -11,6 +11,16 @@
 #include "xc_broadcom_wiced_includes.h"
 #include "lwip/pbuf.h"
 
+#ifdef __xtcp_conf_h_exists__
+#include "xtcp_conf.h"
+#else
+#error "Apps built to use lib_wifi must have an xtcp_conf.h which includes wifi_conf_derived.h"
+#endif
+#if (PBUF_LINK_ENCAPSULATION_HLEN != (WICED_PHYSICAL_HEADER)) || (PBUF_LINK_ENCAPSULATION_HLEN == 0)
+#error "PBUF_LINK_ENCAPSULATION_HLEN != (WICED_PHYSICAL_HEADER)"
+#error "wifi_conf_derived.h doesn't seem to be included in xtcp_conf.h"
+#endif
+
 #undef DEBUG_UNIT
 #define DEBUG_UNIT WIFI_DEBUG
 #include "debug_print.h"
