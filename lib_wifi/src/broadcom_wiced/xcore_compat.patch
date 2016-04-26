@@ -1,3 +1,25 @@
+diff --git a/WICED-SDK-3.3.1/WICED/WWD/include/wwd_debug.h b/WICED-SDK-3.3.1/WICED/WWD/include/wwd_debug.h
+index ec43d71..6524237 100644
+--- a/WICED-SDK-3.3.1/WICED/WWD/include/wwd_debug.h
++++ b/WICED-SDK-3.3.1/WICED/WWD/include/wwd_debug.h
+@@ -12,7 +12,7 @@
+ #define INCLUDED_WWD_DEBUG_H
+ 
+ #include "wiced_defaults.h"
+-#include <stdio.h>
++#include "debug_print.h"
+ 
+ #ifdef __cplusplus
+ extern "C"
+@@ -32,7 +32,7 @@ extern "C"
+  *             Print declarations
+  ******************************************************/
+ 
+-#define WPRINT_MACRO(args) do {printf args;} while(0==1)
++#define WPRINT_MACRO(args) do {debug_printf args;} while(0==1)
+ 
+ /* WICED printing macros for general SDK/Library functions*/
+ #ifdef WPRINT_ENABLE_LIB_INFO
 diff --git a/WICED-SDK-3.3.1/WICED/WWD/include/wwd_events.h b/WICED-SDK-3.3.1/WICED/WWD/include/wwd_events.h
 index 599c2a4..ff3d7f6 100644
 --- a/WICED-SDK-3.3.1/WICED/WWD/include/wwd_events.h
@@ -32,10 +54,10 @@ index 599c2a4..ff3d7f6 100644
  /** @cond */
  
 diff --git a/WICED-SDK-3.3.1/WICED/WWD/include/wwd_wifi.h b/WICED-SDK-3.3.1/WICED/WWD/include/wwd_wifi.h
-index f3816a6..927a9de 100644
+index f3816a6..6498284 100644
 --- a/WICED-SDK-3.3.1/WICED/WWD/include/wwd_wifi.h
 +++ b/WICED-SDK-3.3.1/WICED/WWD/include/wwd_wifi.h
-@@ -94,6 +94,17 @@ extern "C"
+@@ -94,6 +94,18 @@ extern "C"
  #define WICED_WIFI_OPTIMIZE_BANDWIDTH_ROAMING_TRIGGER   ( 1 )
  #define WICED_WIFI_OPTIMIZE_DISTANCE_ROAMING_TRIGGER    ( 2 )
  
@@ -48,12 +70,13 @@ index f3816a6..927a9de 100644
 +typedef enum
 +{
 +    CALLBACK_NULL_FUNC,
++    CALLBACK_SCAN_RESULT_FUNC
 +} wiced_scan_result_callback_func_selector_t;
 +
  /******************************************************
   *                   Enumerations
   ******************************************************/
-@@ -159,7 +170,7 @@ extern wwd_result_t wwd_wifi_scan( wiced_scan_type_t
+@@ -159,7 +171,7 @@ extern wwd_result_t wwd_wifi_scan( wiced_scan_type_t
                                     /*@null@*/ const wiced_mac_t*                  optional_mac,
                                     /*@null@*/ /*@unique@*/ const uint16_t*        optional_channel_list,
                                     /*@null@*/ const wiced_scan_extended_params_t* optional_extended_params,
@@ -239,6 +262,22 @@ index 3e0b946..8a98001 100644
  
      wwd_wifi_ap_is_up = WICED_FALSE;
      return WWD_SUCCESS;
+diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_logging.h b/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_logging.h
+index cec3d66..6db139e 100644
+--- a/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_logging.h
++++ b/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_logging.h
+@@ -24,9 +24,9 @@ extern "C"
+ 
+ #if defined( WWD_LOGGING_UART_ENABLE )
+ 
+-#include <stdio.h>
++#include "debug_print.h"
+ 
+-#define WWD_LOG( x ) {printf x; }
++#define WWD_LOG( x ) {debug_printf x; }
+ 
+ #elif defined( WWD_LOGGING_BUFFER_ENABLE )
+ 
 diff --git a/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c b/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c
 index 9fb523f..d1c14c3 100644
 --- a/WICED-SDK-3.3.1/WICED/WWD/internal/wwd_sdpcm.c
