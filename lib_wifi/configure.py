@@ -21,9 +21,8 @@ if __name__ == "__main__":
 
     if not wiced_version:
         print "Unable to find WICED SDK version in module_build_info"
-        exit(30)
+        exit(1)
 
-    print "Getting broadcom SDK - ",
     wiced_clone_point = os.path.join(lib_wifi_lib_dir, "src", "broadcom_wiced")
     wiced_repo = os.path.join(wiced_clone_point, "sdk")
 
@@ -39,14 +38,15 @@ if __name__ == "__main__":
 
     # Run as "python configure.py"
     if not os.path.exists(wiced_repo):
-        print "Cloning Repo"
+        print "Broadcom SDK not yet present"
         wiced_src_repo = "git://git/broadcom_wiced_sdk"
         subprocess.call(["git", "clone", wiced_src_repo, "sdk"],
                         cwd=wiced_clone_point)
     else:
-        print "Already exists"
+        print "Broadcom SDK already exists"
+        subprocess.call(["git", "pull"], cwd=wiced_clone_point)
 
-    print "Creating patch"
+    print "Creating/updating patch"
     with open(os.path.join(wiced_clone_point, "xcore_compat.patch"), "w") as f:
         subprocess.call(["git", "diff", "-p", "v" + wiced_version, "HEAD"],
                         stdout=f, cwd=wiced_repo)
