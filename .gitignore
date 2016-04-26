@@ -17,3 +17,7 @@ Installs/*
 test_results.csv
 *.log
 **/broadcom_wiced/sdk*/**
+*.xmt
+**/host.dSYM/**
+**/host_simple_wifi/host
+**/test_simple_wifi/wifi_bcm_43362A2
