@@ -5,8 +5,6 @@ import re
 import subprocess
 import shutil
 
-# TODO: add 'clean' option
-
 if __name__ == "__main__":
     # Extract WICED_SDK_VERSION value from module_build_info
     wiced_version = None
@@ -28,6 +26,18 @@ if __name__ == "__main__":
     print "Getting broadcom SDK - ",
     wiced_clone_point = os.path.join(lib_wifi_lib_dir, "src", "broadcom_wiced")
     wiced_repo = os.path.join(wiced_clone_point, "sdk")
+
+    # Run as "python configure.py clean"
+    if (len(sys.argv) > 1) and (sys.argv[1] == 'clean'):
+        # Delete local copy of the SDK if it already exists in lib_wifi
+        if os.path.exists(wiced_repo):
+            print "Removing Broadcom SDK..."
+            shutil.rmtree(wiced_repo)
+        else:
+            print "No Broadcom SDK to clean"
+        exit(0)
+
+    # Run as "python configure.py"
     if not os.path.exists(wiced_repo):
         print "Cloning Repo"
         wiced_src_repo = "git://git/broadcom_wiced_sdk"
