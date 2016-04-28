@@ -6,7 +6,7 @@ LWIP_XTCP=1
 DEPENDENT_MODULES = lib_xtcp(>=5.1.0) lib_ethernet(>=3.0.3) lib_spi(>=3.0.1) lib_gpio(>=1.0.0) lib_filesystem(>=0.0.1) lib_xassert(>=2.0.0) lib_logging(>=2.0.0) lib_locks(>=2.0.2)
 
 WICED_SDK_VERSION ?= 3.3.1
-WICED_BUS ?= SPI
+WICED_BUS ?= spi
 WICED_WLAN_CHIP ?= 43362
 WICED_WLAN_CHIP_REVISION ?= A2
 
