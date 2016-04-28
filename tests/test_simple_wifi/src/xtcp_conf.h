@@ -1,3 +1,4 @@
+// Copyright (c) 2016, XMOS Ltd, All rights reserved
 #ifndef __xtcp_conf_h__
 #define __xtcp_conf_h__
 
