@@ -14,9 +14,11 @@
 #include "filesystem.h"
 #include "xtcp.h"
 
+#include "parse_command_line.h"
 #include "debug_print.h"
 #include "xassert.h"
 
+#define USE_CMD_LINE_ARGS 1
 #define USE_WIFI_BUILTIN_SPI 1
 #define USE_ASYNC_SPI 0
 #define USE_SLEEP_CLOCK 0
@@ -307,6 +309,18 @@ void process_xscope(chanend xscope_data_in,
                     client interface wifi_network_config_if i_conf) {
   int bytesRead = 0;
   unsigned char buffer[256];
+
+#if USE_CMD_LINE_ARGS
+  char network_name[SSID_NAME_SIZE] = "";
+  char network_key[WIFI_MAX_KEY_LENGTH] = "";
+  parse_command_line(1, network_name);
+  parse_command_line(2, network_key);
+
+  // Join the network
+  delay_seconds(3);
+  i_conf.scan_for_networks();
+  i_conf.join_network_by_name(network_name, network_key, strlen(network_key));
+#endif
 
   xscope_connect_data_from_host(xscope_data_in);
 
