@@ -22,8 +22,6 @@ WiFi library change log
 
     - lib_otpinfo: Added dependency 2.0.1
 
-    - lib_spi: Added dependency 3.1.0
-
     - lib_xassert: Added dependency 2.0.1
 
     - lib_xtcp: Added dependency 5.1.0
