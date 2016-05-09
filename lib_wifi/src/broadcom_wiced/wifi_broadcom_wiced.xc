@@ -4,7 +4,6 @@
 
 #include "wifi_broadcom_wiced.h"
 #include "wifi.h"
-#include "spi.h"
 #include "wifi_spi.h"
 #include "gpio.h"
 #include "xc2compat.h"
@@ -32,15 +31,7 @@ typedef enum {
   WIFI_BUILTIN_SPI
 } wifi_spi_type_t;
 
-static const unsigned wifi_bcm_wiced_spi_speed_khz = 1000; // TODO: remove or use for both sync and async
-static const spi_mode_t wifi_bcm_wiced_spi_mode = SPI_MODE_3;
-static const unsigned wifi_bcm_wiced_spi_ss_deassert_ms = 100;
-static unsafe client interface spi_master_if i_wifi_bcm_wiced_spi;
-static unsafe client interface spi_master_async_if i_wifi_bcm_wiced_async_spi;
-static unsigned wifi_bcm_wiced_spi_device_index;
 static wifi_spi_ports * unsafe p_wifi_bcm_wiced_spi;
-static wifi_spi_type_t wifi_spi_master_type_in_use;
-#define WIFI_MAX_ASYNC_SPI_BUF_LEN 2000
 
 signals_t signals;
 unsafe streaming chanend xcore_wwd_pbuf_external;
@@ -54,114 +45,24 @@ int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
-  switch (wifi_spi_master_type_in_use) {
-    case WIFI_SYNCHRONOUS_SPI:
-      i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 2, line_state);
-      break;
-    case WIFI_ASYNCHRONOUS_SPI:
-      i_wifi_bcm_wiced_async_spi.drive_1bit_of_ss_port(0, 2, line_state);
-      break;
-    case WIFI_BUILTIN_SPI:
-      wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
-      break;
-    default:
-      unreachable("Must be WIFI_SYNCHRONOUS_SPI, WIFI_ASYNCHRONOUS_SPI, or"
-                  "WIFI_BUILTIN_SPI");
-      break;
-  }
+  wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
 }
 
 unsafe void xcore_wiced_drive_reset_line(uint32_t line_state) {
-  switch (wifi_spi_master_type_in_use) {
-    case WIFI_SYNCHRONOUS_SPI:
-      i_wifi_bcm_wiced_spi.drive_1bit_of_ss_port(0, 1, line_state);
-      break;
-    case WIFI_ASYNCHRONOUS_SPI:
-      i_wifi_bcm_wiced_async_spi.drive_1bit_of_ss_port(0, 1, line_state);
-      break;
-    case WIFI_BUILTIN_SPI:
-      wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 1, line_state);
-      break;
-    default:
-      unreachable("Must be WIFI_SYNCHRONOUS_SPI, WIFI_ASYNCHRONOUS_SPI, or"
-                  "WIFI_BUILTIN_SPI");
-      break;
-  }
+  wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 1, line_state);
 }
 
 unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
                                      uint8_t * unsafe buffer,
                                      uint16_t buffer_length) {
-  switch (wifi_spi_master_type_in_use) {
-    case WIFI_SYNCHRONOUS_SPI:
-      i_wifi_bcm_wiced_spi.begin_transaction(wifi_bcm_wiced_spi_device_index,
-                                             1000, // TODO: max this out - BCM supports 50MHz (currently breaks above 1MHz)
-                                             wifi_bcm_wiced_spi_mode);
-      if (BUS_READ == direction) {
-        // Reading from the bus TO buffer
-        for (int i = 0; i < buffer_length; i++) {
-          buffer[i] = i_wifi_bcm_wiced_spi.transfer8(buffer[i]);
-        }
-      } else { // Must be BUS_WRITE
-        // Writing to the bus FROM buffer, ignore received data
-        for (int i = 0; i < buffer_length; i++) {
-          i_wifi_bcm_wiced_spi.transfer8(buffer[i]);
-        }
-      }
-      i_wifi_bcm_wiced_spi.end_transaction(wifi_bcm_wiced_spi_ss_deassert_ms);
-      break;
-    case WIFI_ASYNCHRONOUS_SPI:
-      uint8_t read_data[WIFI_MAX_ASYNC_SPI_BUF_LEN];
-      uint8_t * movable read_buf = read_data;
-      uint8_t * movable write_buf = (uint8_t * movable)buffer;
-
-      i_wifi_bcm_wiced_async_spi.begin_transaction(wifi_bcm_wiced_spi_device_index,
-                                                   50000, // FIXME: just a starting point
-                                                   wifi_bcm_wiced_spi_mode);
-      if (BUS_READ == direction) {
-        // Reading from the bus TO buffer
-        xassert(buffer_length <= WIFI_MAX_ASYNC_SPI_BUF_LEN &&
-          msg("WWD attempting SPI transaction with a buffer that's too big"));
-        i_wifi_bcm_wiced_async_spi.init_transfer_array_8(move(read_buf),
-                                                         move(write_buf),
-                                                         buffer_length);
-        select {
-          case i_wifi_bcm_wiced_async_spi.transfer_complete():
-            i_wifi_bcm_wiced_async_spi.retrieve_transfer_buffers_8(read_buf,
-                                                                   write_buf);
-            // Copy data returned by SPI master into buffer
-            memcpy(buffer, read_buf, buffer_length);
-            break;
-        }
-      } else { // Must be BUS_WRITE
-        // Writing to the bus FROM buffer, ignore received data
-        i_wifi_bcm_wiced_async_spi.init_transfer_array_8(move(read_buf),
-                                                         move(write_buf),
-                                                         buffer_length);
-        select {
-          case i_wifi_bcm_wiced_async_spi.transfer_complete():
-            i_wifi_bcm_wiced_async_spi.retrieve_transfer_buffers_8(read_buf,
-                                                                   write_buf);
-            break;
-        }
-      }
-      i_wifi_bcm_wiced_async_spi.end_transaction(wifi_bcm_wiced_spi_ss_deassert_ms);
-      break;
-    case WIFI_BUILTIN_SPI:
-      wifi_spi_init(*p_wifi_bcm_wiced_spi);
-      if (BUS_READ == direction) {
-        // Reading from the bus TO buffer
-        wifi_spi_transfer(buffer_length, (char *)buffer,
-                          *p_wifi_bcm_wiced_spi, WIFI_SPI_READ);
-      } else {
-        wifi_spi_transfer(buffer_length, (char *)buffer,
-                          *p_wifi_bcm_wiced_spi, WIFI_SPI_WRITE);
-      }
-      break;
-    default:
-      unreachable("Must be WIFI_SYNCHRONOUS_SPI, WIFI_ASYNCHRONOUS_SPI, or"
-                  "WIFI_BUILTIN_SPI");
-      break;
+  wifi_spi_init(*p_wifi_bcm_wiced_spi);
+  if (BUS_READ == direction) {
+    // Reading from the bus TO buffer
+    wifi_spi_transfer(buffer_length, (char *)buffer,
+                      *p_wifi_bcm_wiced_spi, WIFI_SPI_READ);
+  } else { // Must be BUS_WRITE
+    wifi_spi_transfer(buffer_length, (char *)buffer,
+                      *p_wifi_bcm_wiced_spi, WIFI_SPI_WRITE);
   }
 }
 
@@ -424,96 +325,6 @@ int signals_is_empty(signals_t &signals){
   return (signals.head == signals.tail);
 }
 
-void wifi_broadcom_wiced_spi(
-    server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
-    server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface xtcp_pbuf_if i_data,
-    client interface spi_master_if i_spi,
-    unsigned spi_device_index,
-    client interface input_gpio_if i_irq,
-    client interface fs_basic_if i_fs) {
-
-  unsafe streaming chanend notification_chanend;
-  unsafe {
-    notification_chanend = signals_init(signals);
-  }
-
-  streaming chan c_xcore_wwd_pbuf;
-
-  par {
-    // TODO: 'combine' wifi_broadcom_wiced_spi_internal and xcore_wwd
-    // Start the interface task
-    {
-      unsafe {
-        i_fs_global = i_fs;
-        // Save the SPI bus details for use from wwd_spi functions
-        wifi_spi_master_type_in_use = WIFI_SYNCHRONOUS_SPI;
-        i_wifi_bcm_wiced_spi = i_spi;
-        wifi_bcm_wiced_spi_device_index = spi_device_index;
-        wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
-                                         i_data, c_xcore_wwd_pbuf);
-      }
-    }
-
-    /* The SDK will expect to start this from the call to wwd_management_init
-     * by attempting to spawn an RTOS thread. The xCORE implementation of the
-     * WWD RTOS callbacks cannot do this, so the driver task is started
-     * immediately and waits to be initialised.
-     */
-    {
-      unsafe {
-        xcore_wwd_pbuf_external = (unsafe streaming chanend)c_xcore_wwd_pbuf;
-        xcore_wwd(i_irq, (streaming chanend)notification_chanend);
-      }
-    }
-  }
-}
-
-void wifi_broadcom_wiced_asyc_spi(
-    server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
-    server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface xtcp_pbuf_if i_data,
-    client interface spi_master_async_if i_spi,
-    unsigned spi_device_index,
-    client interface input_gpio_if i_irq,
-    client interface fs_basic_if i_fs) {
-
-  unsafe streaming chanend notification_chanend;
-  unsafe {
-    notification_chanend = signals_init(signals);
-  }
-
-  streaming chan c_xcore_wwd_pbuf;
-
-  par {
-    // TODO: 'combine' wifi_broadcom_wiced_spi_internal and xcore_wwd
-    // Start the interface task
-    {
-      unsafe {
-        i_fs_global = i_fs;
-        // Save the SPI bus details for use from wwd_spi functions
-        wifi_spi_master_type_in_use = WIFI_ASYNCHRONOUS_SPI;
-        i_wifi_bcm_wiced_async_spi = i_spi;
-        wifi_bcm_wiced_spi_device_index = spi_device_index;
-        wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
-                                         i_data, c_xcore_wwd_pbuf);
-      }
-    }
-
-    /* The SDK will expect to start this from the call to wwd_management_init
-     * by attempting to spawn an RTOS thread. The xCORE implementation of the
-     * WWD RTOS callbacks cannot do this, so the driver task is started
-     * immediately and waits to be initialised.
-     */
-    {
-      unsafe {
-        xcore_wwd_pbuf_external = (unsafe streaming chanend)c_xcore_wwd_pbuf;
-        xcore_wwd(i_irq, (streaming chanend)notification_chanend);
-      }
-    }
-  }
-}
-
 void wifi_broadcom_wiced_builtin_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
@@ -536,7 +347,6 @@ void wifi_broadcom_wiced_builtin_spi(
       unsafe {
         i_fs_global = i_fs;
         // Save the SPI bus details for use from wwd_spi functions
-        wifi_spi_master_type_in_use = WIFI_BUILTIN_SPI;
         p_wifi_bcm_wiced_spi = &p_spi;
         wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
                                          i_data, c_xcore_wwd_pbuf);

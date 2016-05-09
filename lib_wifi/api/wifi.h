@@ -19,7 +19,6 @@
 #include "xc_broadcom_wiced_includes.h"
 #include "xtcp.h"
 #include "ethernet.h"
-#include "spi.h"
 #include "wifi_spi.h"
 #include "gpio.h"
 #include "filesystem.h"
@@ -112,24 +111,6 @@ typedef interface wifi_network_config_if {
   // Soft AP functions
   // TODO: Functions to handle clients connecting when we're an AP...
 } wifi_network_config_if;
-
-void wifi_broadcom_wiced_spi(
-    server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
-    server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface xtcp_pbuf_if i_data,
-    client interface spi_master_if i_spi,
-    unsigned spi_device_index,
-    client interface input_gpio_if i_irq,
-    client interface fs_basic_if i_fs);
-
-void wifi_broadcom_wiced_asyc_spi(
-    server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
-    server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
-    server interface xtcp_pbuf_if i_data,
-    client interface spi_master_async_if i_spi,
-    unsigned spi_device_index,
-    client interface input_gpio_if i_irq,
-    client interface fs_basic_if i_fs);
 
 void wifi_broadcom_wiced_builtin_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,

@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 #include "wifi.h"
-#include "spi.h"
 #include "gpio.h"
 #include "qspi_flash_storage_media.h"
 #include "filesystem.h"
@@ -19,8 +18,6 @@
 #include "xassert.h"
 
 #define USE_CMD_LINE_ARGS 1
-#define USE_WIFI_BUILTIN_SPI 1
-#define USE_ASYNC_SPI 0
 #define USE_SLEEP_CLOCK 0
 #define USE_UDP_REFLECTOR 1
 
@@ -36,7 +33,6 @@ enum flag_status {TRUE=1, FALSE=0};
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
-#if USE_WIFI_BUILTIN_SPI
 wifi_spi_ports p_wifi_spi = {
   on tile[1]: XS1_PORT_1N,
   on tile[1]: XS1_PORT_1M,
@@ -48,13 +44,6 @@ wifi_spi_ports p_wifi_spi = {
   1000,
   0
 };
-#else
-// These ports are used for the SPI master
-out buffered port:32 p_sclk  = on tile[1]:   XS1_PORT_1N;
-out          port    p_ss[1] = on tile[1]: { XS1_PORT_4E }; // Bit 0
-in  buffered port:32 p_miso  = on tile[1]:   XS1_PORT_1M;
-out buffered port:32 p_mosi  = on tile[1]:   XS1_PORT_1L;
-#endif
 
 // Input port used for IRQ interrupt line
 in port p_irq = on tile[1]: XS1_PORT_4F;
@@ -65,11 +54,6 @@ fl_QSPIPorts qspi_flash_ports = {
   PORT_SQI_SIO,
   on tile[0]: XS1_CLKBLK_1
 };
-
-#if USE_ASYNC_SPI
-clock clk0 = on tile[1]: XS1_CLKBLK_1;
-clock clk1 = on tile[1]: XS1_CLKBLK_2;
-#endif
 
 /* IP Config - change this to suit your network
  * Leave with all 0 values to use DHCP/AutoIP
@@ -361,11 +345,6 @@ int main(void) {
   interface wifi_hal_if i_hal[2];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface xtcp_pbuf_if i_data;
-#if USE_ASYNC_SPI
-  interface spi_master_async_if i_async_spi[1];
-#else
-  interface spi_master_if i_spi[1];
-#endif
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
   chan c_xscope_data_in;
@@ -377,29 +356,12 @@ int main(void) {
 
     on tile[1]:                process_xscope(c_xscope_data_in,
                                               i_conf[CONFIG_XSCOPE]);
-#if USE_WIFI_BUILTIN_SPI
     on tile[1]:                wifi_broadcom_wiced_builtin_spi(i_hal, 2,
                                                                i_conf, NUM_CONFIG,
                                                                i_data,
                                                                p_wifi_spi,
                                                                i_inputs[0],
                                                                i_fs[0]);
-#elif USE_ASYNC_SPI
-    on tile[1]:                spi_master_async(i_async_spi, 1, p_sclk, p_mosi,
-                                                p_miso, p_ss, 1, clk0, clk1);
-    on tile[1]:                wifi_broadcom_wiced_asyc_spi(i_hal, 2, i_conf,
-                                                            NUM_CONFIG, i_data,
-                                                            i_async_spi[0], 0,
-                                                            i_inputs[0],
-                                                            i_fs[0]);
-#else
-    on tile[1]: [[distribute]] spi_master(i_spi, 1, p_sclk, p_mosi, p_miso,
-                                          p_ss, 1, null);
-    on tile[1]:                wifi_broadcom_wiced_spi(i_hal, 2, i_conf,
-                                                       NUM_CONFIG, i_data,
-                                                       i_spi[0], 0, i_inputs[0],
-                                                       i_fs[0]);
-#endif
     on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]); // TODO: remove
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],

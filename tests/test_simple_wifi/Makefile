@@ -31,7 +31,7 @@ ENABLE_STAGED_BUILD = 1
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_wifi lib_logging lib_spi lib_gpio lib_filesystem
+USED_MODULES = lib_wifi lib_logging lib_gpio lib_filesystem
 
 EXCLUDE_FILES = main.cpp
 
