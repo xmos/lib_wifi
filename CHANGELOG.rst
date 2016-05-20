@@ -1,6 +1,12 @@
 WiFi library change log
 =======================
 
+0.0.2
+-----
+
+  * Update boot partition size in create_wifi_data_partion_image.py script to
+    avoid sector alignment warning from xFLASH
+
 0.0.1
 -----
 

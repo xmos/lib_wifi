@@ -24,6 +24,6 @@ if __name__ == "__main__":
 
     # Run xflash to write FAT image to data partition of flash
     subprocess.check_call(['xflash', test_xe_path,
-                           '--boot-partition-size', '1000000',
+                           '--boot-partition-size', '1003520',
                            '--data', output_image_path],
                           cwd=os.path.dirname(os.path.realpath(__file__)))
