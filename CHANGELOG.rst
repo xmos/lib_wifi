@@ -6,6 +6,8 @@ WiFi library change log
 
   * Update boot partition size in create_wifi_data_partion_image.py script to
     avoid sector alignment warning from xFLASH
+  * Update test_simple_wifi run_wrapper host application to handle passwords
+    containing semicolons and empty strings
 
 0.0.1
 -----

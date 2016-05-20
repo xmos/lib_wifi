@@ -68,11 +68,18 @@ int main (int argc, char *argv[])
   fgets(key, STRLEN, stdin);
   restore_echo();
 
+  // Remove newline from password
+  size_t key_len = strlen(key);
+  if ((key_len > 0) && (key[key_len-1] == '\n')) {
+    key[--key_len] = '\0';
+  }
+
   // Build command string
-  char cmd[STRLEN] = "./run.sh ";
+  char cmd[STRLEN] = "./run.sh \"";
   strcat(cmd, network_name);
-  strcat(cmd, " ");
+  strcat(cmd, "\" \"");
   strcat(cmd, key);
+  strcat(cmd, "\"");
   system(cmd);
 
   return 0;
