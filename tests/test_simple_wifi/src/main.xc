@@ -18,7 +18,6 @@
 #include "xassert.h"
 
 #define USE_CMD_LINE_ARGS 1
-#define USE_SLEEP_CLOCK 0
 #define USE_UDP_REFLECTOR 1
 
 #define RX_BUFFER_SIZE 2000
@@ -30,8 +29,6 @@
 #define INIT_VAL -1
 
 enum flag_status {TRUE=1, FALSE=0};
-
-out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
 wifi_spi_ports p_wifi_spi = {
   PORT_WLAN_SPI_CLK,
@@ -79,27 +76,6 @@ void filesystem_tasks(server interface fs_basic_if i_fs[]) {
     [[distribute]] qspi_flash_fs_media(i_media, qspi_flash_ports,
                                        qspi_spec, 512);
     filesystem_basic(i_fs, 1, FS_FORMAT_FAT12, i_media);
-  }
-}
-
-void sleep_clock_gen() {
-  // 32.768kHz to bit 3 of p_lpo_sleep_clk
-  timer t;
-  unsigned delay;
-  unsigned clk_signal = 0x8; // Bit 3
-  t :> delay;
-  delay += 1526;
-  unsigned counts[] = {1526, 1526, 1526, 1525, 1526, 1526, 1525};
-  unsigned i = 0;
-  while (1) {
-    select {
-      case t when timerafter(delay) :> void:
-        p_lpo_sleep_clk <: clk_signal;
-        clk_signal = (~clk_signal) & 0x8;
-        delay += counts[i];
-        i = (i+1) % 6;
-        break;
-    }
   }
 }
 
@@ -375,9 +351,6 @@ int main(void) {
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
                                               i_conf[CONFIG_XTCP],
                                               i_data, ipconfig);
-#if USE_SLEEP_CLOCK
-    on tile[0]:                sleep_clock_gen();
-#endif
     on tile[0]:                filesystem_tasks(i_fs);
 #if USE_UDP_REFLECTOR
     on tile[0]:                udp_reflect(c_xtcp[0]);
