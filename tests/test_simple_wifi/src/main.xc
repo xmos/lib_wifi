@@ -363,11 +363,11 @@ int main(void) {
                                   i_hal, 2,
                                   i_conf, NUM_CONFIG,
                                   i_data,
+                                  i_fs[0],
                                   i_wlan_pwr_and_rst[0], // 3V3_EN
                                   i_wlan_pwr_and_rst[1], // RST_N
                                   p_wifi_spi,
-                                  i_irq[0],
-                                  i_fs[0]);
+                                  i_irq[0]);
     on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]); // TODO: remove
     on tile[1]: [[distribute]] output_gpio(i_wlan_pwr_and_rst, 2,
                                            p_wlan_pwr_and_rst, null);

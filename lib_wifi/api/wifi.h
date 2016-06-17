@@ -116,11 +116,11 @@ void wifi_broadcom_wiced_builtin_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
     server interface xtcp_pbuf_if i_data,
+    client interface fs_basic_if i_fs,
     client interface output_gpio_if i_3v3_en,
     client interface output_gpio_if i_rst_n,
     wifi_spi_ports &p_spi,
-    client interface input_gpio_if i_irq,
-    client interface fs_basic_if i_fs);
+    client interface input_gpio_if i_irq);
 
 // NOTE: named to allow future SDIO support: wifi_broadcom_wiced_sdio()
 

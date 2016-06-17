@@ -6,6 +6,8 @@ WiFi library change log
 
   * Updated to support xCORE WiFi Microphone Array 1V1 hardware. Note: the xCORE
     WiFi Microphone Array 1V0 hardware is no longer supported.
+  * Reorder wifi_broadcom_wiced_builtin_spi() parameters to simplify switching
+    between transports in WiFi applications in the future
 
 0.0.2
 -----
