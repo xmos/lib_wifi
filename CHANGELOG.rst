@@ -1,6 +1,12 @@
 WiFi library change log
 =======================
 
+0.0.3
+-----
+
+  * Updated to support xCORE WiFi Microphone Array 1V1 hardware. Note: the xCORE
+    WiFi Microphone Array 1V0 hardware is no longer supported.
+
 0.0.2
 -----
 

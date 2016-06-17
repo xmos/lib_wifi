@@ -34,19 +34,21 @@ enum flag_status {TRUE=1, FALSE=0};
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
 wifi_spi_ports p_wifi_spi = {
-  on tile[1]: XS1_PORT_1N,
-  on tile[1]: XS1_PORT_1M,
-  on tile[1]: XS1_PORT_1L,
-  on tile[1]: XS1_PORT_4E,
-  0, // CS on bit 0 of port 4E
-  on tile[1]: XS1_CLKBLK_3,
+  PORT_WLAN_SPI_CLK,
+  PORT_WLAN_SPI_MISO,
+  PORT_WLAN_SPI_MOSI,
+  PORT_WLAN_SPI_CS_N,
+  0, // CS on 1bit port
+  on tile[1]: XS1_CLKBLK_1,
   1, // 100/4 (2*2n)
   1000,
   0
 };
 
 // Input port used for IRQ interrupt line
-in port p_irq = on tile[1]: XS1_PORT_4F;
+in port p_irq = PORT_WLAN_SPI_IRQ_N;
+
+out port p_wlan_pwr_and_rst = PORT_WLAN_3V3_EN_WLAN_RST_N;
 
 fl_QSPIPorts qspi_flash_ports = {
   PORT_SQI_CS,
@@ -345,8 +347,9 @@ int main(void) {
   interface wifi_hal_if i_hal[2];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface xtcp_pbuf_if i_data;
-  interface input_gpio_if i_inputs[1];
+  interface input_gpio_if i_irq[1];
   interface fs_basic_if i_fs[1];
+  interface output_gpio_if i_wlan_pwr_and_rst[2];
   chan c_xscope_data_in;
 
   chan c_xtcp[1];
@@ -356,14 +359,19 @@ int main(void) {
 
     on tile[1]:                process_xscope(c_xscope_data_in,
                                               i_conf[CONFIG_XSCOPE]);
-    on tile[1]:                wifi_broadcom_wiced_builtin_spi(i_hal, 2,
-                                                               i_conf, NUM_CONFIG,
-                                                               i_data,
-                                                               p_wifi_spi,
-                                                               i_inputs[0],
-                                                               i_fs[0]);
+    on tile[1]:                wifi_broadcom_wiced_builtin_spi(
+                                  i_hal, 2,
+                                  i_conf, NUM_CONFIG,
+                                  i_data,
+                                  i_wlan_pwr_and_rst[0], // 3V3_EN
+                                  i_wlan_pwr_and_rst[1], // RST_N
+                                  p_wifi_spi,
+                                  i_irq[0],
+                                  i_fs[0]);
     on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]); // TODO: remove
-    on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
+    on tile[1]: [[distribute]] output_gpio(i_wlan_pwr_and_rst, 2,
+                                           p_wlan_pwr_and_rst, null);
+    on tile[1]:                input_gpio_with_events(i_irq, 1, p_irq, null);
     on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
                                               i_conf[CONFIG_XTCP],
                                               i_data, ipconfig);

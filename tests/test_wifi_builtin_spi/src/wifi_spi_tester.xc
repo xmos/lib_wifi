@@ -5,12 +5,12 @@
 #include <print.h>
 
 wifi_spi_ports spi_ports = {
-    on tile[1]: XS1_PORT_1N,
-    on tile[1]: XS1_PORT_1M,
-    on tile[1]: XS1_PORT_1L,
-    on tile[1]: XS1_PORT_4E,
-    0, // CS on bit 0 of port 4E
-    on tile[1]: XS1_CLKBLK_3,
+    PORT_WLAN_SPI_CLK,
+    PORT_WLAN_SPI_MISO,
+    PORT_WLAN_SPI_MOSI,
+    PORT_WLAN_SPI_CS_N,
+    0, // CS on 1bit port
+    on tile[1]: XS1_CLKBLK_1,
     1, // 100/4 (2*2n)
     1000,
     0

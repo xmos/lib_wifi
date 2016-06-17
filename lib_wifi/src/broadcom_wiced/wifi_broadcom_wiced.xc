@@ -36,6 +36,8 @@ static wifi_spi_ports * unsafe p_wifi_bcm_wiced_spi;
 signals_t signals;
 unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
+unsafe client interface output_gpio_if i_3v3_en_global;
+unsafe client interface output_gpio_if i_rst_n_global;
 
 // Function prototype for xcore wrapper function found in xcore_wrappers.c
 size_t xcore_wifi_scan_networks();
@@ -45,11 +47,11 @@ int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
-  wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
+  i_3v3_en_global.output(line_state);
 }
 
 unsafe void xcore_wiced_drive_reset_line(uint32_t line_state) {
-  wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 1, line_state);
+  i_rst_n_global.output(line_state);
 }
 
 unsafe void xcore_wiced_spi_transfer(wwd_bus_transfer_direction_t direction,
@@ -329,6 +331,8 @@ void wifi_broadcom_wiced_builtin_spi(
     server interface wifi_hal_if i_hal[n_hal], size_t n_hal,
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
     server interface xtcp_pbuf_if i_data,
+    client interface output_gpio_if i_3v3_en,
+    client interface output_gpio_if i_rst_n,
     wifi_spi_ports &p_spi,
     client interface input_gpio_if i_irq,
     client interface fs_basic_if i_fs) {
@@ -345,8 +349,12 @@ void wifi_broadcom_wiced_builtin_spi(
     // Start the interface task
     {
       unsafe {
+        /* Save interfaces to globals to use from xCORE implementations of WWD
+         * platform functions
+         */
         i_fs_global = i_fs;
-        // Save the SPI bus details for use from wwd_spi functions
+        i_3v3_en_global = i_3v3_en;
+        i_rst_n_global = i_rst_n;
         p_wifi_bcm_wiced_spi = &p_spi;
         wifi_broadcom_wiced_spi_internal(i_hal, n_hal, i_conf, n_conf,
                                          i_data, c_xcore_wwd_pbuf);
