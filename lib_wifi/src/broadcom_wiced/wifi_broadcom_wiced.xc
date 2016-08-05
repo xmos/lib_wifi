@@ -330,7 +330,7 @@ void wifi_broadcom_wiced_builtin_spi(
     server interface wifi_network_config_if i_conf[n_conf], size_t n_conf,
     server interface xtcp_pbuf_if i_data,
     wifi_spi_ports &p_spi,
-    client interface input_gpio_if i_irq,
+    in port p_irq,
     client interface fs_basic_if i_fs) {
 
   unsafe streaming chanend notification_chanend;
@@ -339,6 +339,8 @@ void wifi_broadcom_wiced_builtin_spi(
   }
 
   streaming chan c_xcore_wwd_pbuf;
+
+  interface input_gpio_if i_inputs[1];
 
   par {
     // TODO: 'combine' wifi_broadcom_wiced_spi_internal and xcore_wwd
@@ -361,8 +363,12 @@ void wifi_broadcom_wiced_builtin_spi(
     {
       unsafe {
         xcore_wwd_pbuf_external = (unsafe streaming chanend)c_xcore_wwd_pbuf;
-        xcore_wwd(i_irq, (streaming chanend)notification_chanend);
+        [[combine]] par {
+          xcore_wwd(i_inputs[0], (streaming chanend)notification_chanend);
+          input_gpio_with_events(i_inputs, 1, p_irq, null);
+        }
       }
     }
+    // input_gpio_with_events(i_inputs, 1, p_irq, null);
   }
 }
