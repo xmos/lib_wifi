@@ -1,4 +1,4 @@
-// Copyright (c) 2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2017, XMOS Ltd, All rights reserved
 #ifndef __wifi_broadcom_wiced_h__
 #define __wifi_broadcom_wiced_h__
 

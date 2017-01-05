@@ -1,4 +1,4 @@
-// Copyright (c) 2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2017, XMOS Ltd, All rights reserved
 #include "wifi_broadcom_wiced.h"
 #include "xc_broadcom_wiced_includes.h"
 #include "wwd_poll.h"

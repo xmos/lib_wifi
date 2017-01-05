@@ -1,4 +1,4 @@
-// Copyright (c) 2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2015-2017, XMOS Ltd, All rights reserved
 #include "wwd_rtos.h"
 #include "wwd_rtos_interface.h"
 #include "wwd_poll.h"
