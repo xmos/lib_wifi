@@ -64,14 +64,9 @@ xtcp_ipconfig_t ipconfig = {
                             { 0, 0, 0, 0 }  // gateway (e.g. 192,168,0,1)
 };
 
-void application(client interface wifi_hal_if i_hal,
-                 client interface wifi_network_config_if i_conf) {
-  while (1);
-}
-
 void filesystem_tasks(server interface fs_basic_if i_fs[]) {
   interface fs_storage_media_if i_media;
-  fl_QuadDeviceSpec qspi_spec = FL_QUADDEVICE_ISSI_IS25LQ016B;
+  fl_QuadDeviceSpec qspi_spec = FL_QUADDEVICE_ISSI_IS25LQ032B;
 
   par {
     [[distribute]] qspi_flash_fs_media(i_media, qspi_flash_ports,
@@ -335,20 +330,18 @@ void process_xscope(chanend xscope_data_in,
 }
 
 typedef enum {
-  CONFIG_APP = 0,
-  CONFIG_XTCP,
+  CONFIG_XTCP = 0,
   CONFIG_XSCOPE,
   NUM_CONFIG
 } config_interfaces;
 
 int main(void) {
-  interface wifi_hal_if i_hal[2];
+  interface wifi_hal_if i_hal[1];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface xtcp_pbuf_if i_data;
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
   chan c_xscope_data_in;
-
   chan c_xtcp[1];
 
   par {
@@ -356,15 +349,14 @@ int main(void) {
 
     on tile[1]:                process_xscope(c_xscope_data_in,
                                               i_conf[CONFIG_XSCOPE]);
-    on tile[1]:                wifi_broadcom_wiced_builtin_spi(i_hal, 2,
+    on tile[1]:                wifi_broadcom_wiced_builtin_spi(i_hal, 1,
                                                                i_conf, NUM_CONFIG,
                                                                i_data,
                                                                p_wifi_spi,
                                                                i_inputs[0],
                                                                i_fs[0]);
-    on tile[1]:                application(i_hal[0], i_conf[CONFIG_APP]); // TODO: remove
     on tile[1]:                input_gpio_with_events(i_inputs, 1, p_irq, null);
-    on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[1],
+    on tile[1]:                xtcp_lwip_wifi(c_xtcp, 1, i_hal[0],
                                               i_conf[CONFIG_XTCP],
                                               i_data, ipconfig);
 #if USE_SLEEP_CLOCK
