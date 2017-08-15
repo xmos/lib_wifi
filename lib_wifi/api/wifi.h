@@ -129,6 +129,13 @@ void xtcp_lwip_wifi(chanend xtcp[n], size_t n,
                     client interface xtcp_pbuf_if i_wifi_data,
                     xtcp_ipconfig_t &ipconfig);
 
+/** TODO: document */
+[[combinable]]
+void wifi_ethernet_mac(server ethernet_rx_if i_rx,
+                       server ethernet_tx_if i_tx,
+                       client interface wifi_hal_if i_hal,
+                       client interface xtcp_pbuf_if i_data
+                     );
 #endif // __XC__
 
 #endif // __wifi_h__
