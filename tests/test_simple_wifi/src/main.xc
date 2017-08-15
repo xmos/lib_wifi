@@ -235,6 +235,12 @@ void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server 
   while (1) {
     select {
       case i_cfg.set_macaddr(size_t ifnum, uint8_t mac_address[MACADDR_NUM_BYTES]):
+        uint8_t mac_address_tmp[MACADDR_NUM_BYTES];
+        memcpy(mac_address_tmp, mac_address, sizeof(uint8_t)*MACADDR_NUM_BYTES);
+
+        wifi_cfg.set_mac_address(mac_address_tmp);
+
+        memcpy(mac_address, mac_address_tmp, sizeof(uint8_t)*MACADDR_NUM_BYTES);
         break;
 
       case i_cfg.get_macaddr(size_t ifnum, uint8_t mac_address[MACADDR_NUM_BYTES]):
@@ -314,10 +320,10 @@ int main(void) {
     on tile[1]: input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]: wifi_ethernet_mac(i_rx[0], i_tx[0], i_hal[0], i_data);
     on tile[1]: ethernet_wifi_cfg(i_conf[CONFIG_XTCP], i_cfg[CFG_TO_XTCP]);
-
-    on tile[0]: xtcp_lwip(i_xtcp, 1, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP],
-                          i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null,
-                          null, ipconfig);
+    on tile[0]: {
+      delay_seconds(3);
+      xtcp_lwip(i_xtcp, 1, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
+    }
 #if USE_SLEEP_CLOCK
     on tile[0]: sleep_clock_gen();
 #endif

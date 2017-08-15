@@ -182,7 +182,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
                      mac_address[3], mac_address[4], mac_address[5]);
         break;
 
-      case i_conf[int i].set_mac_address():
+      case i_conf[int i].set_mac_address(uint8_t mac_address[6]):
         break;
 
       case i_conf[int i].get_link_state() -> ethernet_link_state_t state:

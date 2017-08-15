@@ -78,7 +78,7 @@ typedef interface wifi_network_config_if {
   wifi_res_t get_mac_address(uint8_t mac_address[6]);
 
   /** TODO: document */
-  void set_mac_address();
+  void set_mac_address(uint8_t mac_address[6]);
 
   /** TODO: document */
   ethernet_link_state_t get_link_state();
