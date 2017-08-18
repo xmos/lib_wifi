@@ -4,6 +4,7 @@ import os.path
 import re
 import subprocess
 import shutil
+import stat
 
 if __name__ == "__main__":
     # Extract WICED_SDK_VERSION value from module_build_info
@@ -28,10 +29,16 @@ if __name__ == "__main__":
 
     # Run as "python configure.py clean"
     if (len(sys.argv) > 1) and (sys.argv[1] == 'clean'):
+
+        # If rmtree errors on a read only file, this function is called on it
+        def del_rw(action, name, exc):
+            os.chmod(name, stat.S_IWRITE)
+            os.remove(name)
+
         # Delete local copy of the SDK if it already exists in lib_wifi
         if os.path.exists(wiced_repo):
             print "Removing Broadcom SDK..."
-            shutil.rmtree(wiced_repo)
+            shutil.rmtree(wiced_repo, onerror=del_rw)
         else:
             print "No Broadcom SDK to clean"
         exit(0)
