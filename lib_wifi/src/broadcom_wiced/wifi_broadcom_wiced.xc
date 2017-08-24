@@ -135,6 +135,9 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
   buffers_t rx_buffers;
   buffers_init(rx_buffers);
 
+  // Initialise with invalid interface
+  int interface_mode = -1;
+
   while (1) {
     select {
       // WiFi HAL interface
@@ -224,6 +227,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
         memcpy(local_key, security_key, key_length);
         result = xcore_wifi_join_network_at_index(index, local_key, key_length);
+        interface_mode = WWD_STA_INTERFACE;
         break;
 
       case i_conf[int i].join_network_by_name(char name[SSID_NAME_SIZE],
@@ -241,6 +245,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         int index = xcore_wifi_get_network_index(local_name);
         if (index != -1) {
           result = xcore_wifi_join_network_at_index(index, local_key, key_length);
+          interface_mode = WWD_STA_INTERFACE;
         } else {
           debug_printf("Invalid network name\n");
         }
@@ -248,6 +253,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
       case i_conf[int i].leave_network(size_t index):
         xcore_wifi_leave_network();
+        interface_mode = -1;
         break;
 
       case i_conf[int i].start_ap(char ssid[n], const unsigned n) -> unsigned result:
@@ -258,10 +264,13 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         unsafe {
           result = xcore_wifi_start_ap(ssid_tmp);
         }
+
+        interface_mode = WWD_AP_INTERFACE;
         break;
 
       case i_conf[int i].stop_ap(void) -> unsigned result:
         result = xcore_wifi_stop_ap();
+        interface_mode = -1;
         break;
 
       // TODO: WiFi network data interface
@@ -280,7 +289,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         // Increment the reference count as LWIP assumes packets have to be
         // deleted, and so does the WIFI library
         pbuf_ref(p);
-        wwd_network_send_ethernet_data(p, WWD_AP_INTERFACE);
+        wwd_network_send_ethernet_data(p, interface_mode);
         break;
 
       case c_xcore_wwd_pbuf :> pbuf_p p:
