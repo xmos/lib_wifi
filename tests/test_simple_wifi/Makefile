@@ -10,6 +10,7 @@ TARGET = SLICEKIT-X200
 
 APP_NAME =
 
+XTCP_STACK=LWIP
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
 #
