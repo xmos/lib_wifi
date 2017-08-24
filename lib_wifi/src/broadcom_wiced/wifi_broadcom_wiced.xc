@@ -195,6 +195,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
       case i_conf[int i].set_mac_address(uint8_t mac_address[6]):
         wiced_mac_t local_mac;
         memcpy(&local_mac, mac_address, sizeof(uint8_t)*6);
+        xassert(interface_mode == -1);
         xcore_wifi_set_radio_mac_address(local_mac);
         break;
 
