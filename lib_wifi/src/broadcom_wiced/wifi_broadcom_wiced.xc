@@ -221,7 +221,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
       case i_conf[int i].join_network_by_index(size_t index,
                                       uint8_t security_key[key_length],
                                       size_t key_length) -> unsigned result:
-        debug_printf("join_network %d\n", index);
+        // debug_printf("join_network %d\n", index);
         xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
                msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
@@ -240,7 +240,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
         char local_name[SSID_NAME_SIZE];
         memcpy(local_name, name, SSID_NAME_SIZE);
-        debug_printf("join_network %s\n", local_name);
+        // debug_printf("join_network %s\n", local_name);
 
         int index = xcore_wifi_get_network_index(local_name);
         if (index != -1) {
@@ -275,7 +275,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
       // TODO: WiFi network data interface
       case i_data.receive_packet() -> pbuf_p p:
-        debug_printf("Internal receive_packet\n");
+        // debug_printf("Internal receive_packet\n");
         p = buffers_take(rx_buffers);
         if (!buffers_is_empty(rx_buffers)) {
           // If there are still packets to be consumed then notify client again
@@ -285,7 +285,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
       case i_data.send_packet(pbuf_p p):
         // Queue the packet for the WIFI to send it
-        debug_printf("Internal send_packet\n");
+        // debug_printf("Internal send_packet\n");
         // Increment the reference count as LWIP assumes packets have to be
         // deleted, and so does the WIFI library
         pbuf_ref(p);
