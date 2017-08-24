@@ -38,14 +38,14 @@ unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
 // Function prototype for xcore wrapper function found in xcore_wrappers.c
-size_t xcore_wifi_scan_networks();
+size_t xcore_wifi_scan_networks(void);
 unsigned xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
                                           size_t key_length);
-unsigned xcore_wifi_leave_network();
+unsigned xcore_wifi_leave_network(void);
 int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address);
-unsigned xcore_wifi_ready_to_transceive();
+unsigned xcore_wifi_ready_to_transceive(void);
 unsigned xcore_wifi_start_ap(char * unsafe ssid);
 unsigned xcore_wifi_stop_ap(void);
 
