@@ -253,6 +253,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         break;
 
       case i_conf[int i].leave_network(size_t index):
+        xassert(interface_mode == WWD_STA_INTERFACE);
         xcore_wifi_leave_network();
         interface_mode = -1;
         break;
@@ -270,6 +271,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         break;
 
       case i_conf[int i].stop_ap(void) -> unsigned result:
+        xassert(interface_mode == WWD_AP_INTERFACE);
         result = xcore_wifi_stop_ap();
         interface_mode = -1;
         break;
