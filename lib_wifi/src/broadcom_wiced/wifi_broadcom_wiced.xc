@@ -41,6 +41,7 @@ unsafe client interface fs_basic_if i_fs_global;
 size_t xcore_wifi_scan_networks();
 unsigned xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
                                           size_t key_length);
+unsigned xcore_wifi_leave_network();
 int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address);
