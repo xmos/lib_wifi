@@ -43,6 +43,10 @@ unsigned xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
                                           size_t key_length);
 int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
+unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address);
+unsigned xcore_wifi_ready_to_transceive();
+unsigned xcore_wifi_start_ap(char * unsafe ssid);
+unsigned xcore_wifi_stop_ap(void);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
   wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
@@ -117,6 +121,8 @@ static int buffers_is_empty(buffers_t &buffers){
   return (buffers.head == buffers.tail);
 }
 
+#define MAX_SSID_LENGTH (256)
+
 // Needs to be unsafe due to input of pbuf_p from streaming channel
 [[combinable]]
 static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from name now?
@@ -183,10 +189,18 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         break;
 
       case i_conf[int i].set_mac_address(uint8_t mac_address[6]):
+        wiced_mac_t local_mac;
+        memcpy(&local_mac, mac_address, sizeof(uint8_t)*6);
+        xcore_wifi_set_radio_mac_address(local_mac);
         break;
 
       case i_conf[int i].get_link_state() -> ethernet_link_state_t state:
-        state = ETHERNET_LINK_UP;
+
+        if (xcore_wifi_ready_to_transceive()) {
+          state = ETHERNET_LINK_UP;
+        } else {
+          state = ETHERNET_LINK_DOWN;
+        }
         break;
 
       case i_conf[int i].set_link_state(ethernet_link_state_t state):
@@ -232,6 +246,21 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         break;
 
       case i_conf[int i].leave_network(size_t index):
+        xcore_wifi_leave_network();
+        break;
+
+      case i_conf[int i].start_ap(char ssid[n], const unsigned n) -> unsigned result:
+        char ssid_tmp[MAX_SSID_LENGTH];
+        memcpy(ssid_tmp, ssid, sizeof(char)*n);
+        ssid_tmp[n] = '\0';
+
+        unsafe {
+          result = xcore_wifi_start_ap(ssid_tmp);
+        }
+        break;
+
+      case i_conf[int i].stop_ap(void) -> unsigned result:
+        result = xcore_wifi_stop_ap();
         break;
 
       // TODO: WiFi network data interface
@@ -250,7 +279,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         // Increment the reference count as LWIP assumes packets have to be
         // deleted, and so does the WIFI library
         pbuf_ref(p);
-        wwd_network_send_ethernet_data(p, WWD_STA_INTERFACE);
+        wwd_network_send_ethernet_data(p, WWD_AP_INTERFACE);
         break;
 
       case c_xcore_wwd_pbuf :> pbuf_p p:

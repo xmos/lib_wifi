@@ -220,6 +220,35 @@ unsigned xcore_wifi_join_network_at_index(size_t index,
   return result;
 }
 
+unsigned xcore_wifi_leave_network()
+{
+  return WWD_SUCCESS == wwd_wifi_leave(WWD_STA_INTERFACE);
+}
+
+unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address)
+{
+  return WWD_SUCCESS == wwd_wifi_set_mac_address(mac_address);
+}
+
+unsigned xcore_wifi_ready_to_transceive()
+{
+  return WWD_SUCCESS == wwd_wifi_is_ready_to_transceive(WWD_STA_INTERFACE);
+}
+
+unsigned xcore_wifi_start_ap(char * ssid)
+{
+  wiced_ssid_t wiced_ssid;
+  wiced_ssid.length = strlen(ssid);
+  memcpy(wiced_ssid.value, ssid, wiced_ssid.length+1);
+  const unsigned result = wwd_wifi_start_ap(&wiced_ssid, WICED_SECURITY_OPEN, NULL, 0, 5);
+  return (WWD_SUCCESS == result);
+}
+
+unsigned xcore_wifi_stop_ap(void)
+{
+  return (WWD_SUCCESS == wwd_wifi_stop_ap());
+}
+
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t *mac_address) {
   return wwd_wifi_get_mac_address(mac_address, WWD_STA_INTERFACE);
 }

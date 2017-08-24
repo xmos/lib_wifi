@@ -102,6 +102,12 @@ typedef interface wifi_network_config_if {
                         size_t key_length);
 
   /** TODO: document */
+  unsigned start_ap(char ssid[n], const unsigned n);
+
+  /** TODO: document */
+  unsigned stop_ap(void);
+
+  /** TODO: document */
   void leave_network(size_t index); // can you be connected to more than one?
 
   // TODO: MAC address filtering/ethertype filtering/
