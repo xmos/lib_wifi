@@ -134,7 +134,7 @@ static void dhcp_add_option(dhcp_packet_t & dhcp_packet, const dhcp_option_type_
   ptr[payload_length + 2] = 0xFF;
 }
 
-static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, const dhcp_packet_t & dhcp_packet, unsigned int length)
+static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, const dhcp_packet_t & dhcp_packet, int length)
 {
   dhcp_packet_t result = dhcp_packet;
   const xtcp_ipaddr_t broadcast_addr    = BROADCAST_ADDR;
@@ -142,25 +142,25 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, co
   const xtcp_ipaddr_t your_ip_address   = {192, 168,   2, 2};
   const xtcp_ipaddr_t server_ip_address = {192, 168,   2, 1};
   const xtcp_ipaddr_t net_mask          = {255, 255, 255, 0};
-  const char * domain_name = "vda.local";
-
+  const char * domain_name              = "vdad.local";
 
   err_t error = etharp_add_static_entry((void*)your_ip_address, (void*)dhcp_packet.client_hardware_address);
 
-  result.op   = DHCP_OP_BOOT_REPLY;
+  result.op = DHCP_OP_BOOT_REPLY;
   memcpy(result.your_ip_address, your_ip_address, sizeof(xtcp_ipaddr_t));
   memcpy(result.server_ip_address, server_ip_address, sizeof(xtcp_ipaddr_t));
   memset(result.server_host_name, 0, sizeof(char)*64);
   memset(result.boot_file_name, 0, sizeof(char)*128);
-  memset(result.options, 0xFF, sizeof(char)*312);
+  memset(result.options, 0x00, sizeof(char)*312);
+  result.options[0] = 0xFF;
 
   unsigned char type = DHCP_OFFER;
-  unsigned int time = 0xFFFF;
+  unsigned int time  = 0x60ea0000;
   dhcp_add_option(result, DHCP_OPTION_MESSAGE_TYPE, 1, &type);
-  dhcp_add_option(result, DHCP_OPTION_SUBNET_MASK, 4, net_mask);
   dhcp_add_option(result, DHCP_OPTION_SERVER_IDENTIFIER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_IP_ADDRESS_LEASE_TIME, 4, (void*)&time);
   dhcp_add_option(result, DHCP_OPTION_ROUTER, 4, server_ip_address);
+  dhcp_add_option(result, DHCP_OPTION_SUBNET_MASK, 4, net_mask);
   dhcp_add_option(result, DHCP_OPTION_DNS_SERVER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_DOMAIN_NAME, strlen(domain_name), domain_name);
 
@@ -178,22 +178,21 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, co
 
 static void dhcp_on_request(client xtcp_if i_xtcp, xtcp_connection_t & conn, const dhcp_packet_t & dhcp_packet)
 {
-  static unsigned char next_address = 2;
   dhcp_packet_t result = dhcp_packet;
   const xtcp_ipaddr_t broadcast_addr    = BROADCAST_ADDR;
   const xtcp_ipaddr_t zero_addr         = ZERO_ADDR;
-  const xtcp_ipaddr_t your_ip_address   = {192, 168,   2, next_address};
+  const xtcp_ipaddr_t your_ip_address   = {192, 168,   2, 2};
   const xtcp_ipaddr_t server_ip_address = {192, 168,   2, 1};
   const xtcp_ipaddr_t net_mask          = {255, 255, 255, 0};
-  next_address++;
+  const char * domain_name              = "vdad.local";
 
-  result.op   = DHCP_OP_BOOT_REPLY;
-  /*result.secs = 0;*/
+  result.op = DHCP_OP_BOOT_REPLY;
   memcpy(result.your_ip_address, your_ip_address, sizeof(xtcp_ipaddr_t));
   memcpy(result.server_ip_address, server_ip_address, sizeof(xtcp_ipaddr_t));
   memset(result.server_host_name, 0, sizeof(char)*64);
   memset(result.boot_file_name, 0, sizeof(char)*128);
-  memset(result.options, 0xFF, sizeof(char)*312);
+  memset(result.options, 0x00, sizeof(char)*312);
+  result.options[0] = 0xFF;
 
   unsigned char type = DHCP_ACK;
   dhcp_add_option(result, DHCP_OPTION_MESSAGE_TYPE, 1, &type);
