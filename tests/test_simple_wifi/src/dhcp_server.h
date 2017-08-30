@@ -86,7 +86,7 @@ typedef enum dhcp_message_type_t {
   DHCP_REQUEST,
   DHCP_DECLINE,
   DHCP_ACK,
-  DHCP_NAK,
+  DHCP_NACK,
   DHCP_RELEASE,
 } dhcp_message_type_t;
 
