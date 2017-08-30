@@ -165,8 +165,8 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, co
   dhcp_add_option(result, DHCP_OPTION_DOMAIN_NAME, strlen(domain_name), domain_name);
 
 
-  i_xtcp.bind_remote_udp(conn, your_ip_address, LOCAL_PORT);
-  i_xtcp.bind_local_udp(conn, REMOTE_PORT);
+  i_xtcp.bind_remote_udp(conn, your_ip_address, REMOTE_PORT);
+  i_xtcp.bind_local_udp(conn, LOCAL_PORT);
 
   unsafe {
     const int result = i_xtcp.send(conn, (char*)&result, dhcp_packet_length(result));
@@ -200,8 +200,8 @@ static void dhcp_on_request(client xtcp_if i_xtcp, xtcp_connection_t & conn, con
   dhcp_add_option(result, DHCP_OPTION_SUBNET_MASK, 4, net_mask);
   dhcp_add_option(result, DHCP_OPTION_SERVER_IDENTIFIER, 4, server_ip_address);
 
-  i_xtcp.bind_remote_udp(conn, broadcast_addr, LOCAL_PORT);
-  i_xtcp.bind_local_udp(conn, REMOTE_PORT);
+  i_xtcp.bind_remote_udp(conn, your_ip_address, REMOTE_PORT);
+  i_xtcp.bind_local_udp(conn, LOCAL_PORT);
 
   unsafe {
     const int result = i_xtcp.send(conn, (char*)&result, dhcp_packet_length(result));
