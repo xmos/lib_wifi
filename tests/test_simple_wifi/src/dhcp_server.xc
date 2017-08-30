@@ -9,7 +9,7 @@
 #define LOCAL_PORT (67)
 #define BROADCAST_ADDR {255, 255, 255, 255}
 #define ZERO_ADDR {0, 0, 0, 0}
-#define DHCP_PREFIX_LENGTH (239)
+#define DHCP_PREFIX_LENGTH (240)
 
 
 static dhcp_option_t dhcp_option_end()
@@ -75,7 +75,7 @@ static dhcp_message_type_t dhcp_message_type(const dhcp_packet_t & dhcp_packet)
 
 static unsigned int dhcp_options_length(const dhcp_packet_t & dhcp_packet)
 {
-  unsigned int result = 2;
+  unsigned int result = 1;
   for (
     dhcp_option_t option = dhcp_option_begin(dhcp_packet);
     !dhcp_option_is_end(option);
