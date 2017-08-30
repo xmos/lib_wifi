@@ -71,7 +71,7 @@ typedef struct dhcp_packet_t {
   char server_host_name[64];
   char boot_file_name[128];
   unsigned int magic_cookie;
-  unsigned char options[312];
+  unsigned char options[308];
 } dhcp_packet_t;
 
 typedef enum dhcp_op_t {
