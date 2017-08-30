@@ -212,6 +212,23 @@ static void dhcp_on_request(client xtcp_if i_xtcp, xtcp_connection_t & conn, con
   i_xtcp.bind_local_udp(conn, LOCAL_PORT);
 }
 
+static void dhcp_handle(client xtcp_if i_xtcp, xtcp_connection_t & conn, const dhcp_packet_t & dhcp_packet, int length)
+{
+  switch (dhcp_message_type(dhcp_packet)) {
+    case DHCP_DISCOVER:
+      debug_printf("DHCP_DISCOVER\n");
+      dhcp_on_discover(i_xtcp, conn, dhcp_packet, length);
+      break;
+    case DHCP_REQUEST:
+      debug_printf("DHCP_REQUEST\n");
+      dhcp_on_request(i_xtcp, conn, dhcp_packet);
+      break;
+    default:
+      debug_printf("DHCP_UNKNOWN\n");
+      break;
+  }
+}
+
 void dhcp_server(client xtcp_if i_xtcp)
 {
   const xtcp_ipaddr_t broadcast_addr = BROADCAST_ADDR;
@@ -230,46 +247,13 @@ void dhcp_server(client xtcp_if i_xtcp)
 
       switch (event)
       {
-        case XTCP_IFUP:
-          debug_printf("IFUP\n");
-          break;
-
-        case XTCP_IFDOWN:
-          debug_printf("IFDOWN\n");
-          break;
-
-        case XTCP_NEW_CONNECTION:
-          debug_printf("New connection to listening port: %d\n", conn_tmp.local_port);
-          break;
-
         case XTCP_RECV_DATA:
-          dhcp_packet_t dhcp_packet;
-          int result = 0;
           unsafe {
-            result = i_xtcp.recv(conn, (char*)&dhcp_packet, sizeof(dhcp_packet));
+            dhcp_packet_t dhcp_packet;
+            const int result = i_xtcp.recv(conn, (char*)&dhcp_packet, sizeof(dhcp_packet));
             debug_printf("Incoming data of length %d\n", result);
+            dhcp_handle(i_xtcp, conn, dhcp_packet, result);
           }
-
-          switch (dhcp_message_type(dhcp_packet)) {
-            case DHCP_DISCOVER:
-              debug_printf("DHCP_DISCOVER\n");
-              dhcp_on_discover(i_xtcp, conn, dhcp_packet, result);
-              break;
-            case DHCP_REQUEST:
-              debug_printf("DHCP_REQUEST\n");
-              dhcp_on_request(i_xtcp, conn, dhcp_packet);
-              break;
-            default:
-              debug_printf("DHCP_UNKNOWN\n");
-              break;
-          }
-          break;
-
-        case XTCP_TIMED_OUT:
-        case XTCP_ABORTED:
-        case XTCP_CLOSED:
-          debug_printf("Closed connection: %d\n", conn.id);
-          i_xtcp.close(conn_tmp);
           break;
         default:
           break;
