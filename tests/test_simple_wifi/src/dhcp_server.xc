@@ -73,6 +73,17 @@ static dhcp_message_type_t dhcp_message_type(const dhcp_packet_t & dhcp_packet)
   return result;
 }
 
+static unsigned int dhcp_option_length(const dhcp_option_t & dhcp_option)
+{
+  switch (dhcp_option.type) {
+    case DHCP_OPTION_PADDING:
+    case DHCP_OPTION_END:
+      return 1;
+    default:
+      return 2 + dhcp_option.length;
+  }
+}
+
 static unsigned int dhcp_options_length(const dhcp_packet_t & dhcp_packet)
 {
   unsigned int result = 1;
@@ -81,7 +92,7 @@ static unsigned int dhcp_options_length(const dhcp_packet_t & dhcp_packet)
     !dhcp_option_is_end(option);
     option = dhcp_option_next(option)
   ) {
-    result += option.length + 2;
+    result += dhcp_option_length(option);
   }
 
   return result;
