@@ -139,9 +139,9 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, co
   dhcp_packet_t result = dhcp_packet;
   const xtcp_ipaddr_t broadcast_addr    = BROADCAST_ADDR;
   const xtcp_ipaddr_t zero_addr         = ZERO_ADDR;
-  const xtcp_ipaddr_t your_ip_address   = {192, 168,   2, 2};
-  const xtcp_ipaddr_t server_ip_address = {192, 168,   2, 1};
-  const xtcp_ipaddr_t net_mask          = {255, 255, 255, 0};
+  const xtcp_ipaddr_t your_ip_address   = {192, 168,   2, 200};
+  const xtcp_ipaddr_t server_ip_address = {192, 168,   2,   1};
+  const xtcp_ipaddr_t net_mask          = {255, 255, 255,   0};
   const char * domain_name              = "vdad.local";
 
   err_t error = etharp_add_static_entry((void*)your_ip_address, (void*)dhcp_packet.client_hardware_address);
@@ -164,11 +164,12 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, co
   dhcp_add_option(result, DHCP_OPTION_DNS_SERVER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_DOMAIN_NAME, strlen(domain_name), domain_name);
 
+
   i_xtcp.bind_remote_udp(conn, your_ip_address, LOCAL_PORT);
   i_xtcp.bind_local_udp(conn, REMOTE_PORT);
 
   unsafe {
-    const int result = i_xtcp.send(conn, (char*)&result, length);
+    const int result = i_xtcp.send(conn, (char*)&result, dhcp_packet_length(result));
     debug_printf("Outgoing data of length %d\n", result);
   }
 
