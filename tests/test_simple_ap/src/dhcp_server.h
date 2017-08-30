@@ -90,6 +90,15 @@ typedef enum dhcp_message_type_t {
   DHCP_RELEASE,
 } dhcp_message_type_t;
 
+typedef struct dhcp_config_t {
+  xtcp_ipaddr_t server_ip_address;
+  xtcp_ipaddr_t start_ip_address;
+  xtcp_ipaddr_t end_ip_address;
+  xtcp_ipaddr_t subnet_mask;
+  xtcp_ipaddr_t router;
+  xtcp_ipaddr_t dns_server;
+} dhcp_config_t;
+
 void dhcp_server(client xtcp_if i_xtcp);
 
 #endif
