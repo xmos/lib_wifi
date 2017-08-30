@@ -159,8 +159,8 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, co
   dhcp_add_option(result, DHCP_OPTION_MESSAGE_TYPE, 1, &type);
   dhcp_add_option(result, DHCP_OPTION_SERVER_IDENTIFIER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_IP_ADDRESS_LEASE_TIME, 4, (void*)&time);
-  dhcp_add_option(result, DHCP_OPTION_ROUTER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_SUBNET_MASK, 4, net_mask);
+  dhcp_add_option(result, DHCP_OPTION_ROUTER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_DNS_SERVER, 4, server_ip_address);
   dhcp_add_option(result, DHCP_OPTION_DOMAIN_NAME, strlen(domain_name), domain_name);
 
