@@ -28,27 +28,63 @@ static dns_question_t dns_question_end()
   return result;
 }
 
-unsafe static void dns_serialize_question(const dns_question_t & question, char * unsafe const dst_ptr)
+static void dns_serialize_question(const dns_question_t & question, char * const dst_ptr)
 {
-  char * unsafe const name_ptr = dst_ptr;
-  char * unsafe const type_ptr = name_ptr + question.name_length + sizeof(char);
-  char * unsafe const class_ptr = type_ptr + sizeof(short);
+  char * const name_ptr = dst_ptr;
+  char * const type_ptr = name_ptr + question.name_length + sizeof(char);
+  char * const class_ptr = type_ptr + sizeof(short);
 
   memcpy(name_ptr, question.name, question.name_length);
   memcpy(type_ptr, &question.type, sizeof(short));
   memcpy(class_ptr, &question.class, sizeof(short));
 }
 
-unsafe static void dns_deserialize_question(char * unsafe const src_ptr, dns_question_t & question)
+static void dns_deserialize_question(const char * const src_ptr, dns_question_t & question)
 {
-  question.name = src_ptr;
-  question.name_length = strlen((char*)src_ptr);
+  unsafe {question.name = src_ptr;}
+  question.name_length = strlen((const char*)src_ptr);
 
-  const char * unsafe const type_ptr = src_ptr + question.name_length + 1;
-  const char * unsafe const class_ptr = type_ptr + sizeof(short);
+  const char * const type_ptr = src_ptr + question.name_length + 1;
+  const char * const class_ptr = type_ptr + sizeof(short);
 
   memcpy(&question.type, type_ptr, sizeof(short));
   memcpy(&question.class, class_ptr, sizeof(short));
+}
+
+static void dns_serialize_record(const dns_record_t & record, char * const dst_ptr)
+{
+  char * const name_ptr        = dst_ptr;
+  char * const type_ptr        = name_ptr + record.name_length + 1;
+  char * const class_ptr       = type_ptr + sizeof(short);
+  char * const ttl_ptr         = class_ptr + sizeof(short);
+  char * const payload_len_ptr = ttl_ptr + sizeof(int);
+  char * const payload_ptr     = payload_len_ptr + sizeof(short);
+
+  memcpy(name_ptr, record.name, record.name_length + 1);
+  memcpy(type_ptr, &record.type, sizeof(short));
+  memcpy(class_ptr, &record.class, sizeof(short));
+  memcpy(ttl_ptr, &record.ttl, sizeof(int));
+  memcpy(payload_len_ptr+1, &record.payload_length, sizeof(char));
+  memcpy(payload_ptr, record.payload, record.payload_length);
+}
+
+static void dns_deserialize_record(const char * const src_ptr, dns_record_t & record)
+{
+  const char * const name_ptr        = src_ptr;
+  const int name_length              = strlen(name_ptr);
+  const char * const type_ptr        = name_ptr + name_length + 1;
+  const char * const class_ptr       = type_ptr + sizeof(short);
+  const char * const ttl_ptr         = class_ptr + sizeof(short);
+  const char * const payload_len_ptr = ttl_ptr + sizeof(int);
+  const char * const payload_ptr     = payload_len_ptr + sizeof(short);
+
+  unsafe {record.name = name_ptr;}
+  record.name_length = name_length;
+  memcpy(&record.type, type_ptr, sizeof(short));
+  memcpy(&record.class, class_ptr, sizeof(short));
+  memcpy(&record.ttl, ttl_ptr, sizeof(int));
+  memcpy(&record.payload_length, payload_len_ptr+1, sizeof(char));
+  unsafe {record.payload = payload_ptr;}
 }
 
 static int dns_question_is_end(const dns_question_t & question)
@@ -74,8 +110,8 @@ static dns_question_t dns_question_next(const dns_packet_t & packet, const dns_q
 
   if (current.index + 1 < packet.question_count) {
     unsafe {
-      char * unsafe const ptr = current.name + dns_question_length(current);
-      dns_deserialize_question(ptr, result);
+      const char * unsafe const ptr = current.name + dns_question_length(current);
+      dns_deserialize_question((const void*)ptr, result);
     }
     result.index = current.index + 1;
   }
@@ -111,22 +147,10 @@ static dns_record_t dns_answer_begin(const dns_packet_t & packet)
   dns_record_t result = dns_record_end();
 
   if (packet.answer_count > 0) {
-    const unsigned int questions_length         = dns_questions_length(packet);
-    const unsigned char * const name_ptr        = packet.payload + questions_length;
-    const unsigned int name_length              = strlen(name_ptr);
-    const unsigned char * const type_ptr        = name_ptr + name_length + 1;
-    const unsigned char * const class_ptr       = type_ptr + sizeof(short);
-    const unsigned char * const ttl_ptr         = class_ptr + sizeof(short);
-    const unsigned char * const payload_len_ptr = ttl_ptr + sizeof(int);
-    const unsigned char * const payload_ptr     = payload_len_ptr + sizeof(short);
+    const unsigned int questions_length = dns_questions_length(packet);
+    const unsigned char * const ptr     = (void*)packet.payload + questions_length;
 
-    unsafe {result.name = name_ptr;}
-    result.name_length = name_length;
-    memcpy(&result.type, type_ptr, sizeof(short));
-    memcpy(&result.class, class_ptr, sizeof(short));
-    memcpy(&result.ttl, ttl_ptr, sizeof(int));
-    memcpy(&result.payload_length, payload_len_ptr, sizeof(short));
-    unsafe {result.payload = payload_ptr;}
+    dns_deserialize_record(ptr, result);
     result.index = 0;
   }
 
@@ -138,25 +162,11 @@ static dns_record_t dns_answer_next(const dns_packet_t & packet, const dns_recor
   dns_record_t next = dns_record_end();
 
   if (current.index + 1 < packet.answer_count) {
-    const unsigned char * ptr = NULL;
-    unsafe {ptr = (void*)current.payload + current.payload_length;}
+    const char * ptr = NULL;
+    unsafe {ptr = (const char*)current.payload + current.payload_length;}
 
-    const unsigned char * const name_ptr        = ptr;
-    const unsigned int name_length              = strlen(name_ptr);
-    const unsigned char * const type_ptr        = name_ptr + name_length + 1;
-    const unsigned char * const class_ptr       = type_ptr + sizeof(short);
-    const unsigned char * const ttl_ptr         = class_ptr + sizeof(short);
-    const unsigned char * const payload_len_ptr = ttl_ptr + sizeof(int);
-    const unsigned char * const payload_ptr     = payload_len_ptr + sizeof(short);
-
-    unsafe {next.name = name_ptr;}
-    next.name_length = name_length;
-    memcpy(&next.type, type_ptr, sizeof(short));
-    memcpy(&next.class, class_ptr, sizeof(short));
-    memcpy(&next.ttl, ttl_ptr, sizeof(int));
-    memcpy(&next.payload_length, payload_len_ptr, sizeof(short));
-    unsafe {next.payload = payload_ptr;}
-    next.index = 0;
+    dns_deserialize_record(ptr, next);
+    next.index = current.index + 1;
   }
 
   return next;
@@ -193,7 +203,7 @@ static void dns_add_question(const dns_question_t & question, dns_packet_t & pac
   unsigned char * const question_begin = packet.payload;
   unsigned char * const question_end   = question_begin + question_length;
 
-  xassert((payload_end + question_length) < (packet.payload + DNS_MAX_PAYLOAD_SIZE));
+  xassert((DNS_MAX_PAYLOAD_SIZE - payload_length) >= question_length);
 
   memmove(question_end, payload_begin, payload_length);
   unsafe {dns_serialize_question(question, question_begin);}
@@ -206,31 +216,19 @@ static void dns_add_answer(const dns_record_t & record, dns_packet_t & packet)
   const unsigned int payload_length   = dns_packet_length(packet) - 12;
   unsigned char * const payload_begin = packet.payload;
   unsigned char * const payload_end   = packet.payload + payload_length;
-  unsigned char * const packet_end    = payload_begin + DNS_MAX_PAYLOAD_SIZE;
 
   const unsigned int questions_length   = dns_questions_length(packet);
   unsigned char * const questions_begin = payload_begin;
   unsigned char * const questions_end   = questions_begin + questions_length;
 
-  const unsigned int record_length         = dns_record_length(record);
-  unsigned char * const record_begin       = questions_end;
-  unsigned char * const record_name_ptr    = record_begin;
-  unsigned char * const record_type_ptr    = record_name_ptr + 1 + record.name_length;
-  unsigned char * const record_class_ptr   = record_type_ptr + sizeof(short);
-  unsigned char * const record_ttl_ptr     = record_class_ptr + sizeof(short);
-  unsigned char * const record_len_ptr     = record_ttl_ptr + sizeof(int);
-  unsigned char * const record_payload_ptr = record_len_ptr + sizeof(short);
-  unsigned char * const record_end         = record_begin + record_length;
+  const unsigned int record_length   = dns_record_length(record);
+  unsigned char * const record_begin = questions_end;
+  unsigned char * const record_end   = record_begin + record_length;
 
-  /*xassert((record_end + (payload_end - questions_end)) < packet_end);*/
+  xassert((DNS_MAX_PAYLOAD_SIZE - payload_length) >= record_length);
 
   memmove(record_end, questions_end, payload_end - questions_end);
-  memcpy(record_name_ptr, record.name, record.name_length + 1);
-  memcpy(record_type_ptr, &record.type, sizeof(short));
-  memcpy(record_class_ptr, &record.class, sizeof(short));
-  memcpy(record_ttl_ptr, &record.ttl, sizeof(int));
-  memcpy(record_len_ptr+1, &record.payload_length, sizeof(char));
-  unsafe{ memcpy(record_payload_ptr, record.payload, record.payload_length); }
+  dns_serialize_record(record, record_begin);
 
   packet.answer_count++;
 }
@@ -290,7 +288,6 @@ void dns_server(client xtcp_if i_xtcp)
               dns_packet_t packet;
               const int result = i_xtcp.recv(conn_tmp, (void*)&packet, sizeof(packet));
               if (result > 0) {
-                /*debug_printf("Incoming data of length %d\n", result);*/
                 dns_handle(i_xtcp, conn_tmp, packet);
                 i_xtcp.close(conn_tmp);
               }
