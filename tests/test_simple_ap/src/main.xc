@@ -16,6 +16,8 @@
 #include "debug_print.h"
 #include "xassert.h"
 #include "dhcp_server.h"
+#include "dns_server.h"
+#include "httpd.h"
 
 #define USE_CMD_LINE_ARGS 1
 #define USE_SLEEP_CLOCK 0
@@ -199,7 +201,7 @@ int main(void) {
   interface xtcp_pbuf_if i_data;
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
-  xtcp_if i_xtcp[1];
+  xtcp_if i_xtcp[3];
   ethernet_cfg_if i_cfg[NUM_CFG_CLIENTS];
   ethernet_rx_if i_rx[NUM_ETH_CLIENTS];
   ethernet_tx_if i_tx[NUM_ETH_CLIENTS];
@@ -212,15 +214,15 @@ int main(void) {
     on tile[1]: ethernet_wifi_cfg(i_conf[CONFIG_XTCP], i_cfg[CFG_TO_XTCP]);
     on tile[0]: {
       delay_seconds(3);
-      xtcp_lwip(i_xtcp, 1, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
+      xtcp_lwip(i_xtcp, 3, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
     }
 #if USE_SLEEP_CLOCK
     on tile[0]: sleep_clock_gen();
 #endif
     on tile[0]: filesystem_tasks(i_fs);
-#if USE_UDP_REFLECTOR
     on tile[0]: dhcp_server(i_xtcp[0]);
-#endif
+    on tile[0]: dns_server(i_xtcp[1]);
+    on tile[0]: xhttpd(i_xtcp[2]);
   }
 
   return 0;
