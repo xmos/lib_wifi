@@ -169,7 +169,6 @@ static void dhcp_on_discover(client xtcp_if i_xtcp, xtcp_connection_t & conn, dh
 
   unsafe {
     const int result = i_xtcp.send(conn, (char*)&result, sizeof(result));
-    debug_printf("Outgoing data of length %d\n", result);
   }
 
   i_xtcp.bind_remote_udp(conn, state.zero_ip_address, REMOTE_PORT);
@@ -205,7 +204,6 @@ static void dhcp_on_request(client xtcp_if i_xtcp, xtcp_connection_t & conn, dhc
 
   unsafe {
     const int result = i_xtcp.send(conn, (char*)&result, sizeof(result));
-    debug_printf("Outgoing data of length %d\n", result);
   }
 
   i_xtcp.bind_remote_udp(conn, state.zero_ip_address, REMOTE_PORT);
@@ -218,15 +216,10 @@ static void dhcp_handle(client xtcp_if i_xtcp, xtcp_connection_t & conn, dhcp_st
 {
   switch (dhcp_message_type(dhcp_packet)) {
     case DHCP_DISCOVER:
-      debug_printf("DHCP_DISCOVER\n");
       dhcp_on_discover(i_xtcp, conn, state, dhcp_packet);
       break;
     case DHCP_REQUEST:
-      debug_printf("DHCP_REQUEST\n");
       dhcp_on_request(i_xtcp, conn, state, dhcp_packet);
-      break;
-    default:
-      debug_printf("DHCP_UNKNOWN\n");
       break;
   }
 }
@@ -259,7 +252,6 @@ void dhcp_server(client xtcp_if i_xtcp)
           unsafe {
             dhcp_packet_t dhcp_packet;
             const int result = i_xtcp.recv(conn, (char*)&dhcp_packet, sizeof(dhcp_packet));
-            debug_printf("Incoming data of length %d\n", result);
             dhcp_handle(i_xtcp, conn, state, dhcp_packet);
           }
           break;

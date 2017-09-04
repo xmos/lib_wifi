@@ -1,5 +1,4 @@
 #include "dns_server.h"
-#include "debug_print.h"
 #include "xassert.h"
 #include <string.h>
 
@@ -266,10 +265,8 @@ static void dns_handle(client xtcp_if i_xtcp, xtcp_connection_t & conn, dns_pack
   }
 
   const unsigned int packet_out_length = dns_packet_length(packet_out);
-  /*debug_printf("Sending response of length %d\n", packet_out_length);*/
   dns_htons(packet_out);
   const int result = i_xtcp.send(conn, (void*)&packet_out, packet_out_length);
-  /*debug_printf("Outgoing data of length %d\n", result);*/
 }
 
 void dns_server(client xtcp_if i_xtcp)
