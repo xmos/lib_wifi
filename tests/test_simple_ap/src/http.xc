@@ -137,6 +137,8 @@ PARSE_T(http_method_t) static parse_http_method(const char * unsafe begin, const
       return {1, begin + 7, end, HTTP_METHOD_CONNECT};
     } else if (0 == memcmp(begin, "PATCH", 5)) {
       return {1, begin + 5, end, HTTP_METHOD_PATCH};
+    } else if (0 == memcmp(begin, "BREW", 4)) {
+      return {1, begin + 4, end, HTCPCP_METHOD_BREW};
     } else {
       return {0, begin, end, HTTP_METHOD_UNKNOWN};
     }

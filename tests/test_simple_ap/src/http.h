@@ -11,13 +11,18 @@ typedef enum http_method_t {
   HTTP_METHOD_TRACE,
   HTTP_METHOD_OPTIONS,
   HTTP_METHOD_CONNECT,
-  HTTP_METHOD_PATCH
+  HTTP_METHOD_PATCH,
+  HTCPCP_METHOD_BREW,
+  HTCPCP_METHOD_PROPFIND,
+  HTCPCP_METHOD_WHEN,
+
 } http_method_t;
 
 typedef enum http_version_t {
   HTTP_VERSION_UNKNOWN,
   HTTP_VERSION_1_0,
-  HTTP_VERSION_1_1
+  HTTP_VERSION_1_1,
+  HTCPCP_VERSION_1_0
 } http_version_t;
 
 typedef enum http_field_type_t {
@@ -91,8 +96,14 @@ typedef enum http_field_type_t {
   HTTP_FIELD_WWW_AUTHENTICATE,
   HTTP_FIELD_X_FRAME_OPTIONS,
 
+  HTTP_FIELD_ACCEPT_ADDITIONS,
+
   HTTP_FIELD_COUNT
 } http_field_type_t;
+
+typedef enum http_status_code_t {
+  HTTP_STATUS_UNKNOWN
+} http_status_code_t;
 
 typedef struct string_view_t {
   const char * unsafe begin;
@@ -104,6 +115,12 @@ typedef struct http_request_t {
   string_view_t target;
   http_version_t version;
 } http_request_t;
+
+typedef struct http_response_t {
+  http_version_t version;
+  http_status_code_t status;
+  string_view_t reason;
+} http_response_t;
 
 typedef struct http_field_t {
   http_field_type_t name;
