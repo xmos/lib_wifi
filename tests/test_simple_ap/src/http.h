@@ -14,8 +14,7 @@ typedef enum http_method_t {
   HTTP_METHOD_PATCH,
   HTCPCP_METHOD_BREW,
   HTCPCP_METHOD_PROPFIND,
-  HTCPCP_METHOD_WHEN,
-
+  HTCPCP_METHOD_WHEN
 } http_method_t;
 
 typedef enum http_version_t {

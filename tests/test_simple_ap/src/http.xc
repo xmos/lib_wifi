@@ -139,6 +139,10 @@ PARSE_T(http_method_t) static parse_http_method(const char * unsafe begin, const
       return {1, begin + 5, end, HTTP_METHOD_PATCH};
     } else if (0 == memcmp(begin, "BREW", 4)) {
       return {1, begin + 4, end, HTCPCP_METHOD_BREW};
+    } else if (0 == memcmp(begin, "PROPFIND", 8)) {
+      return {1, begin + 8, end, HTCPCP_METHOD_PROPFIND};
+    } else if (0 == memcmp(begin, "WHEN", 4)) {
+      return {1, begin + 4, end, HTCPCP_METHOD_WHEN};
     } else {
       return {0, begin, end, HTTP_METHOD_UNKNOWN};
     }
@@ -152,6 +156,8 @@ PARSE_T(http_version_t) static parse_http_version(const char * unsafe begin, con
       return {1, begin + 8, end, HTTP_VERSION_1_0};
     } else if (0 == memcmp(begin, "HTTP/1.1", 8)) {
       return {1, begin + 8, end, HTTP_VERSION_1_1};
+    } else if (0 == memcmp(begin, "HTCPCP/1.0", 10)) {
+      return {1, begin + 10, end, HTCPCP_VERSION_1_0};
     } else {
       return {0, begin, end, HTTP_VERSION_UNKNOWN};
     }
@@ -277,7 +283,6 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
   unsafe {
     {status, begin, end, result.request} = parse_http_request(begin, end);
     if (status) {
-      /*{status, begin, end, result.fields_begin} = parse_http_field(begin, end);*/
       {status, begin, end, void} = parse_http_fields(begin, end, result.fields);
       if (status) {
         return {1, begin, end, result};
