@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include "debug_print.h"
 
-const struct {
+const static struct {
   const char key[33];
   const http_field_type_t value;
 } field_lut[] = {
@@ -76,8 +76,14 @@ const struct {
   {"X-Frame-Options",HTTP_FIELD_X_FRAME_OPTIONS},
 };
 
-#define PARSE_T(X) {int, const char * unsafe, const char * unsafe, X}
-
+/** Parse a single character from the input range.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ * @param value The character to "parse".
+ *
+ * @returns a parsed character.
+ */
 PARSE_T(char) static parse_char(const char * unsafe begin, const char * unsafe end, const char value)
 {
   unsafe {
@@ -89,25 +95,46 @@ PARSE_T(char) static parse_char(const char * unsafe begin, const char * unsafe e
   }
 }
 
+/** Parse a string until a given sentinel value is reached.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ * @param sentinel The value which is considered the "end" of the string.
+ *
+ * @returns a parsed string view.
+ */
 PARSE_T(string_view_t) static parse_string_until(const char * unsafe begin, const char * unsafe end, const char sentinel)
 {
   string_view_t result = {begin};
   unsafe {
+    // While we haven't reached the end of the input range.
     for (const char * unsafe itr = begin; end != itr; ++itr) {
       if (sentinel == *itr) {
         result.end = itr;
+        // If we have found the sentinel, return the string_view_t.
         return {1, itr, end, result};
       }
     }
   }
+
+  // Failed to find the sentinel.
   return {0, begin, end, result};
 }
 
+/** Parse 0, or more, consecutive whitespace characters.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed count of whitespace characters.
+ */
 PARSE_T(int) static parse_whitespace(const char * unsafe begin, const char * unsafe end)
 {
   unsafe {
+    // While we haven't reached the end of the input range.
     for (const char * unsafe itr = begin; end != itr; ++itr) {
       if (!isspace(*itr)) {
+        // If a non-whitespace character has been found, return the count.
         return {1, itr, end, itr - begin};
       }
     }
@@ -116,8 +143,16 @@ PARSE_T(int) static parse_whitespace(const char * unsafe begin, const char * uns
   return {1, end, end, end - begin};
 }
 
+/** Parse an HTTP method.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_method_t.
+ */
 PARSE_T(http_method_t) static parse_http_method(const char * unsafe begin, const char * unsafe end)
 {
+  // TODO: Better search strategy?
   unsafe {
     if (0 == memcmp(begin, "GET", 3)) {
       return {1, begin + 3, end, HTTP_METHOD_GET};
@@ -149,6 +184,13 @@ PARSE_T(http_method_t) static parse_http_method(const char * unsafe begin, const
   }
 }
 
+/** Parse a supported HTTP method.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_version_t.
+ */
 PARSE_T(http_version_t) static parse_http_version(const char * unsafe begin, const char * unsafe end)
 {
   unsafe {
@@ -164,6 +206,13 @@ PARSE_T(http_version_t) static parse_http_version(const char * unsafe begin, con
   }
 }
 
+/** Parse an HTTP target, eg /index.html.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed string_view_t which contains the target string.
+ */
 PARSE_T(string_view_t) static parse_http_target(const char * unsafe begin, const char * unsafe end)
 {
   int status;
@@ -172,6 +221,13 @@ PARSE_T(string_view_t) static parse_http_target(const char * unsafe begin, const
   return {status, begin, end, result};
 }
 
+/** Parse an HTTP request.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_request_t.
+ */
 PARSE_T(http_request_t) static parse_http_request(const char * unsafe begin, const char * unsafe end)
 {
   int status = 0;
@@ -203,11 +259,20 @@ PARSE_T(http_request_t) static parse_http_request(const char * unsafe begin, con
   return {0, begin, end, result};
 }
 
+/** Parse an HTTP field name.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_field_type_t.
+ */
 PARSE_T(http_field_type_t) static parse_http_field_name(const char * unsafe begin, const char * unsafe end)
 {
   // TODO: improve search algorithm. Current is O(n).
   unsafe {
+    // For each element in the field look-up table.
     for (int i = 0; i < 67; ++i) {
+      // Does it match?
       if (strlen(field_lut[i].key) == (end - begin)) {
         if (0 == memcmp(begin, field_lut[i].key, end - begin)) {
           return {1, end, end, field_lut[i].value};
@@ -216,9 +281,17 @@ PARSE_T(http_field_type_t) static parse_http_field_name(const char * unsafe begi
     }
   }
 
+  // We found an unknown field.
   return {1, begin, end, HTTP_FIELD_UNKNOWN};
 }
 
+/** Parse an HTTP field.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_field_t.
+ */
 PARSE_T(http_field_t) static parse_http_field(const char * unsafe begin, const char * unsafe end)
 {
   int status;
@@ -259,7 +332,15 @@ PARSE_T(http_field_t) static parse_http_field(const char * unsafe begin, const c
   return {0, _begin, _end, result};
 }
 
-PARSE_T(int) parse_http_fields(const char * unsafe begin, const char * unsafe end, string_view_t result[HTTP_FIELD_COUNT])
+/** Parse all HTTP fields.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ * @param result The array where the fields are stored
+ *
+ * @returns 0
+ */
+PARSE_T(int) static parse_http_fields(const char * unsafe begin, const char * unsafe end, string_view_t result[HTTP_FIELD_COUNT])
 {
   int status = 1;
   http_field_t field;
@@ -275,6 +356,13 @@ PARSE_T(int) parse_http_fields(const char * unsafe begin, const char * unsafe en
   return {status, begin, end, 0};
 }
 
+/** Parse an HTTP message.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_t.
+ */
 PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
 {
   int status;

@@ -1,6 +1,8 @@
 #ifndef _HTTP_H_
 #define _HTTP_H_
 
+#define PARSE_T(X) {int, const char * unsafe, const char * unsafe, X}
+
 typedef enum http_method_t {
   HTTP_METHOD_UNKNOWN,
   HTTP_METHOD_GET,
@@ -132,7 +134,13 @@ typedef struct http_t {
   string_view_t body;
 } http_t;
 
-http_field_t http_field_begin(const http_t & http);
-{int, const char * unsafe, const char * unsafe, http_t} parse_http(const char * unsafe begin, const char * unsafe end);
+/** Parse an HTTP message.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns a parsed http_t.
+ */
+PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end);
 
 #endif
