@@ -234,7 +234,7 @@ PARSE_T(http_field_t) static parse_http_field(const char * unsafe begin, const c
             if (status) {
               {status, void, void, result.name} = parse_http_field_name(field_name.begin, field_name.end);
               if (status) {
-                return {1, begin, _end, result};
+                return {1, _begin, _end, result};
               }
             }
           }
@@ -261,7 +261,7 @@ PARSE_T(int) parse_http_fields(const char * unsafe begin, const char * unsafe en
       if (status) {
         result[field.name] = field.value;
       }
-    } while (status && HTTP_FIELD_UNKNOWN != field.name);
+    } while (status && field.value.begin != field.value.end);
   }
 
   return {status, begin, end, 0};
