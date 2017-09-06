@@ -380,3 +380,123 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
     return {0, begin, end, result};
   }
 }
+
+static char * unsafe serialize_char(const char value, char * unsafe begin, char * unsafe end)
+{
+  unsafe {*begin = value;}
+  return begin;
+}
+
+static char * unsafe serialize_string(const char * unsafe string, char * unsafe begin, char * unsafe end)
+{
+  unsafe {
+    const unsigned int length = strlen((void*)string);
+    memcpy(begin, string, length);
+    return begin + length;
+  }
+}
+
+static char * unsafe serialize_string_view(const string_view_t & view, char * unsafe begin, char * unsafe end)
+{
+  unsafe {
+    const unsigned int length = view.end - view.begin;
+    memcpy(begin, view.begin, length);
+    return begin + length;
+  }
+}
+
+static char * unsafe serialize_http_method(const http_method_t method, char * unsafe begin, char * unsafe end)
+{
+  switch(method) {
+    case HTTP_METHOD_GET:
+      return serialize_string("GET", begin, end);
+    case HTTP_METHOD_HEAD:
+      return serialize_string("HEAD", begin, end);
+    case HTTP_METHOD_POST:
+      return serialize_string("POST", begin, end);
+    case HTTP_METHOD_PUT:
+      return serialize_string("PUT", begin, end);
+    case HTTP_METHOD_DELETE:
+      return serialize_string("DELETE", begin, end);
+    case HTTP_METHOD_TRACE:
+      return serialize_string("TRACE", begin, end);
+    case HTTP_METHOD_OPTIONS:
+      return serialize_string("OPTIONS", begin, end);
+    case HTTP_METHOD_CONNECT:
+      return serialize_string("CONNECT", begin, end);
+    case HTTP_METHOD_PATCH:
+      return serialize_string("PATCH", begin, end);
+    case HTCPCP_METHOD_BREW:
+      return serialize_string("BREW", begin, end);
+    case HTCPCP_METHOD_PROPFIND:
+      return serialize_string("PROPFIND", begin, end);
+    case HTCPCP_METHOD_WHEN:
+      return serialize_string("WHEN", begin, end);
+  }
+
+  return begin;
+}
+
+static char * unsafe serialize_http_version(const http_version_t version, char * unsafe begin, char * unsafe end)
+{
+  switch (version) {
+    case HTTP_VERSION_1_0:
+      return serialize_string("HTTP/1.0", begin, end);
+    case HTTP_VERSION_1_1:
+      return serialize_string("HTTP/1.1", begin, end);
+    case HTCPCP_VERSION_1_0:
+      return serialize_string("HTCPCP/1.0", begin, end);
+  }
+
+  return begin;
+}
+
+static char * unsafe serialize_http_target(const string_view_t & target, char * unsafe begin, char * unsafe end)
+{
+  return serialize_string_view(target, begin, end);
+
+  return begin;
+}
+
+static char * unsafe serialize_http_request(const http_request_t & request, char * unsafe begin, char * unsafe end)
+{
+  begin = serialize_http_method(request.method, begin, end);
+  begin = serialize_char(' ', begin, end);
+  begin = serialize_http_target(request.target, begin, end);
+  begin = serialize_char(' ', begin, end);
+  begin = serialize_http_version(request.version, begin, end);
+  return begin;
+}
+
+static char * unsafe serialize_http_field_name(const http_field_type_t field_type, char * unsafe begin, char * unsafe end)
+{
+  for (int i = 0; i < 67; ++i) {
+    if (field_lut[i].value == field_type) {
+      return serialize_string(field_lut[i].key, begin, end);
+    }
+  }
+
+  return begin;
+}
+
+static char * unsafe serialize_http_fields(const http_t & http, char * unsafe begin, char * unsafe end)
+{
+  for (int i = 0; i < HTTP_FIELD_COUNT; ++i) {
+    if (http.fields[i].begin != http.fields[i].end) {
+      begin = serialize_http_field_name(i, begin, end);
+      begin = serialize_string(": ", begin, end);
+      begin = serialize_string_view(http.fields[i], begin, end);
+      begin = serialize_string("\r\n", begin, end);
+    }
+  }
+
+  return serialize_string("\r\n", begin, end);
+}
+
+char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * unsafe end)
+{
+  begin = serialize_http_request(http.request, begin, end);
+  begin = serialize_http_fields(http, begin, end);
+  begin = serialize_string("\r\n", begin, end);
+  return serialize_string_view(http.body, begin, end);
+}
