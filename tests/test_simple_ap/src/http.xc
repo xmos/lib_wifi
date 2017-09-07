@@ -1,6 +1,7 @@
 #include "http.h"
 #include <string.h>
 #include <ctype.h>
+#include <xassert.h>
 #include "debug_print.h"
 
 const static struct {
@@ -383,6 +384,7 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
 
 static char * unsafe serialize_char(const char value, char * unsafe begin, char * unsafe end)
 {
+  xassert(begin < end);
   unsafe {*begin = value;}
   return begin;
 }
@@ -391,6 +393,7 @@ static char * unsafe serialize_string(const char * unsafe string, char * unsafe 
 {
   unsafe {
     const unsigned int length = strlen((void*)string);
+    xassert(begin + length < end);
     memcpy(begin, string, length);
     return begin + length;
   }
@@ -398,6 +401,7 @@ static char * unsafe serialize_string(const char * unsafe string, char * unsafe 
 
 static char * unsafe serialize_string_view(const string_view_t & view, char * unsafe begin, char * unsafe end)
 {
+  xassert(view.end - view.begin < end - begin);
   unsafe {
     const unsigned int length = view.end - view.begin;
     memcpy(begin, view.begin, length);
