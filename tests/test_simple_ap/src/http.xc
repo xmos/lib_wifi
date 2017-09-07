@@ -274,10 +274,13 @@ PARSE_T(http_status_code_t) static parse_http_status_code(const char * unsafe be
   char c[3];
   {status, begin, end, c[0]} = parse_any_char(begin, end);
   if (status) {
+    c[0] -= '0';
     {status, begin, end, c[1]} = parse_any_char(begin, end);
     if (status) {
+      c[1] -= '0';
       {status, begin, end, c[2]} = parse_any_char(begin, end);
       if (status && isdigit(c[0]) && isdigit(c[1]) && isdigit(c[2])) {
+        c[2] -= '0';
         return {1, begin, end, c[0] * 100 + c[1] * 10 + c[2]};
       }
     }
