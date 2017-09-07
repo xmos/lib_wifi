@@ -541,9 +541,27 @@ static char * unsafe serialize_http_request(const http_request_t & request, char
   return begin;
 }
 
+static char * unsafe serialize_status_code(const http_status_code_t status, char * unsafe begin, char * unsafe end)
+{
+  const char c[3] = {
+    '0' + (status % 10),
+    '0' + ((status / 10) % 10),
+    '0' + ((status / 100) % 10)
+  };
+
+  begin = serialize_char(c[2], begin, end);
+  begin = serialize_char(c[1], begin, end);
+  return serialize_char(c[0], begin, end);
+}
+
 static char * unsafe serialize_http_response(const http_response_t & request, char * unsafe begin, char * unsafe end)
 {
-  return begin;
+  begin = serialize_http_version(request.version, begin, end);
+  begin = serialize_char(' ', begin, end);
+  begin = serialize_status_code(request.status, begin, end);
+  begin = serialize_char(' ', begin, end);
+  begin = serialize_string_view(request.reason, begin, end);
+  return serialize_string("\r\n", begin, end);
 }
 
 static char * unsafe serialize_http_field_name(const http_field_type_t field_type, char * unsafe begin, char * unsafe end)
