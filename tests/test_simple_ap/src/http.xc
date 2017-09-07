@@ -393,7 +393,7 @@ static char * unsafe serialize_string(const char * unsafe string, char * unsafe 
 {
   unsafe {
     const unsigned int length = strlen((const char*)string);
-    xassert(begin + length < end);
+    xassert(begin < end && begin + length < end);
     memcpy(begin, string, length);
     return begin + length;
   }
@@ -401,7 +401,7 @@ static char * unsafe serialize_string(const char * unsafe string, char * unsafe 
 
 static char * unsafe serialize_string_view(const string_view_t & view, char * unsafe begin, char * unsafe end)
 {
-  xassert(view.end - view.begin < end - begin);
+  xassert(begin < end && view.end < view.begin && view.end - view.begin < end - begin);
   unsafe {
     const unsigned int length = view.end - view.begin;
     memcpy(begin, view.begin, length);
