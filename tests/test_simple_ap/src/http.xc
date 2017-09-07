@@ -392,7 +392,7 @@ static char * unsafe serialize_char(const char value, char * unsafe begin, char 
 static char * unsafe serialize_string(const char * unsafe string, char * unsafe begin, char * unsafe end)
 {
   unsafe {
-    const unsigned int length = strlen((void*)string);
+    const unsigned int length = strlen((const char*)string);
     xassert(begin + length < end);
     memcpy(begin, string, length);
     return begin + length;
