@@ -96,6 +96,13 @@ PARSE_T(char) static parse_char(const char * unsafe begin, const char * unsafe e
   }
 }
 
+PARSE_T(char) static parse_any_char(const char * unsafe begin, const char * unsafe end)
+{
+  unsafe {
+    return {1, begin + 1, end, *begin};
+  };
+}
+
 /** Parse a string until a given sentinel value is reached.
  *
  * @param begin The beginning of the input range.
@@ -260,6 +267,55 @@ PARSE_T(http_request_t) static parse_http_request(const char * unsafe begin, con
   return {0, begin, end, result};
 }
 
+PARSE_T(http_status_code_t) static parse_http_status_code(const char * unsafe begin, const char * unsafe end)
+{
+  int status;
+  http_status_code_t result;
+  char c[3];
+  {status, begin, end, c[0]} = parse_any_char(begin, end);
+  if (status) {
+    {status, begin, end, c[1]} = parse_any_char(begin, end);
+    if (status) {
+      {status, begin, end, c[2]} = parse_any_char(begin, end);
+      if (status && isdigit(c[0]) && isdigit(c[1]) && isdigit(c[2])) {
+        return {1, begin, end, c[0] * 100 + c[1] * 10 + c[2]};
+      }
+    }
+  }
+
+  return {0, begin, end, result};
+}
+
+PARSE_T(http_response_t) static parse_http_response(const char * unsafe begin, const char * unsafe end)
+{
+  int status;
+  http_response_t result;
+  {status, begin, end, result.version} = parse_http_version(begin, end);
+  if (status) {
+    {status, begin, end, void} = parse_char(begin, end, ' ');
+    if (status) {
+      {status, begin, end, result.status} = parse_http_status_code(begin, end);
+      if (status) {
+        {status, begin, end, void} = parse_char(begin, end, ' ');
+        if (status) {
+          {status, begin, end, result.reason} = parse_string_until(begin, end, '\r');
+          if (status) {
+            {status, begin, end, void} = parse_char(begin, end, '\r');
+            if (status) {
+              {status, begin, end, void} = parse_char(begin, end, '\n');
+              if (status) {
+                return {1, begin, end, result};
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {0, begin, end, result};
+}
+
 /** Parse an HTTP field name.
  *
  * @param begin The beginning of the input range.
@@ -370,11 +426,21 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
   http_t result;
 
   unsafe {
-    {status, begin, end, result.request} = parse_http_request(begin, end);
+    {status, begin, end, result.start_line.request} = parse_http_request(begin, end);
     if (status) {
+      result.type = HTTP_REQUEST;
       {status, begin, end, void} = parse_http_fields(begin, end, result.fields);
       if (status) {
         return {1, begin, end, result};
+      }
+    } else {
+      {status, begin, end, result.start_line.response} = parse_http_response(begin, end);
+      if (status) {
+        result.type = HTTP_RESPONSE;
+        {status, begin, end, void} = parse_http_fields(begin, end, result.fields);
+        if (status) {
+          return {1, begin, end, result};
+        }
       }
     }
 
@@ -472,6 +538,11 @@ static char * unsafe serialize_http_request(const http_request_t & request, char
   return begin;
 }
 
+static char * unsafe serialize_http_response(const http_response_t & request, char * unsafe begin, char * unsafe end)
+{
+  return begin;
+}
+
 static char * unsafe serialize_http_field_name(const http_field_type_t field_type, char * unsafe begin, char * unsafe end)
 {
   for (int i = 0; i < 67; ++i) {
@@ -499,7 +570,11 @@ static char * unsafe serialize_http_fields(const http_t & http, char * unsafe be
 
 char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * unsafe end)
 {
-  begin = serialize_http_request(http.request, begin, end);
+  if (HTTP_REQUEST == http.type) {
+    begin = serialize_http_request(http.start_line.request, begin, end);
+  } else if (HTTP_RESPONSE) {
+    begin = serialize_http_response(http.start_line.response, begin, end);
+  }
   begin = serialize_http_fields(http, begin, end);
   begin = serialize_string("\r\n", begin, end);
   return serialize_string_view(http.body, begin, end);

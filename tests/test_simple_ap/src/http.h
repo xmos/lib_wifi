@@ -102,9 +102,10 @@ typedef enum http_field_type_t {
   HTTP_FIELD_COUNT
 } http_field_type_t;
 
-typedef enum http_status_code_t {
+/*typedef enum http_status_code_t {
   HTTP_STATUS_UNKNOWN
-} http_status_code_t;
+} http_status_code_t;*/
+typedef int http_status_code_t;
 
 typedef struct string_view_t {
   const char * unsafe begin;
@@ -128,8 +129,18 @@ typedef struct http_field_t {
   string_view_t value;
 } http_field_t;
 
+typedef enum http_message_type_t {
+  HTTP_REQUEST,
+  HTTP_RESPONSE
+} http_message_type_t;
+
 typedef struct http_t {
-  http_request_t request;
+  http_message_type_t type;
+  union {
+    http_request_t request;
+    http_response_t response;
+  } start_line;
+
   string_view_t fields[HTTP_FIELD_COUNT];
   string_view_t body;
 } http_t;
