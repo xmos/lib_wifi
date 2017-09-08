@@ -599,6 +599,5 @@ char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * un
     begin = serialize_http_response(http.start_line.response, begin, end);
   }
   begin = serialize_http_fields(http, begin, end);
-  begin = serialize_string("\r\n", begin, end);
   return serialize_string_view(http.body, begin, end);
 }
