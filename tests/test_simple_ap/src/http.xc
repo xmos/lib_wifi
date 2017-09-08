@@ -451,6 +451,14 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
   }
 }
 
+/** Serialize a single character into the output range.
+ *
+ * @param value The character to "serialize".
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_char(const char value, char * unsafe begin, char * unsafe end)
 {
   xassert(begin < end);
@@ -460,6 +468,14 @@ static char * unsafe serialize_char(const char value, char * unsafe begin, char 
   }
 }
 
+/** Serialize a C-style string into the output range.
+ *
+ * @param string The C-style string.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_string(const char * unsafe string, char * unsafe begin, char * unsafe end)
 {
   unsafe {
@@ -470,6 +486,14 @@ static char * unsafe serialize_string(const char * unsafe string, char * unsafe 
   }
 }
 
+/** Serialize a string view into the output range.
+ *
+ * @param view The string view to serialize
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_string_view(const string_view_t & view, char * unsafe begin, char * unsafe end)
 {
   xassert(&begin && &end && &view && begin < end && view.begin < view.end && view.end - view.begin < end - begin);
@@ -480,6 +504,14 @@ static char * unsafe serialize_string_view(const string_view_t & view, char * un
   }
 }
 
+/** Serialize an HTTP method into the output range.
+ *
+ * @param method The HTTP method.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_method(const http_method_t method, char * unsafe begin, char * unsafe end)
 {
   switch(method) {
@@ -512,6 +544,14 @@ static char * unsafe serialize_http_method(const http_method_t method, char * un
   return begin;
 }
 
+/** Serialize an HTTP version into the output range.
+ *
+ * @param version The HTTP version.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_version(const http_version_t version, char * unsafe begin, char * unsafe end)
 {
   switch (version) {
@@ -526,6 +566,14 @@ static char * unsafe serialize_http_version(const http_version_t version, char *
   return begin;
 }
 
+/** Serialize an HTTP target string into the output range.
+ *
+ * @param target The HTTP target.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_target(const string_view_t & target, char * unsafe begin, char * unsafe end)
 {
   return serialize_string_view(target, begin, end);
@@ -533,6 +581,14 @@ static char * unsafe serialize_http_target(const string_view_t & target, char * 
   return begin;
 }
 
+/** Serialize an HTTP request line into the output range.
+ *
+ * @param request The HTTP request.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_request(const http_request_t & request, char * unsafe begin, char * unsafe end)
 {
   begin = serialize_http_method(request.method, begin, end);
@@ -543,6 +599,14 @@ static char * unsafe serialize_http_request(const http_request_t & request, char
   return begin;
 }
 
+/** Serialize an HTTP status code into the output range.
+ *
+ * @param status The HTTP status code.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_status_code(const http_status_code_t status, char * unsafe begin, char * unsafe end)
 {
   const char c[3] = {
@@ -556,6 +620,14 @@ static char * unsafe serialize_status_code(const http_status_code_t status, char
   return serialize_char(c[0], begin, end);
 }
 
+/** Serialize an HTTP request line into the output range.
+ *
+ * @param request The HTTP request.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_response(const http_response_t & request, char * unsafe begin, char * unsafe end)
 {
   begin = serialize_http_version(request.version, begin, end);
@@ -566,6 +638,14 @@ static char * unsafe serialize_http_response(const http_response_t & request, ch
   return serialize_string("\r\n", begin, end);
 }
 
+/** Serialize an HTTP field name into the output range.
+ *
+ * @param field_type The HTTP field type.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_field_name(const http_field_type_t field_type, char * unsafe begin, char * unsafe end)
 {
   for (int i = 0; i < 67; ++i) {
@@ -577,6 +657,14 @@ static char * unsafe serialize_http_field_name(const http_field_type_t field_typ
   return begin;
 }
 
+/** Serialze HTTP field into the output range.
+ *
+ * @param http The HTTP object, from which the fields are taken.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 static char * unsafe serialize_http_fields(const http_t & http, char * unsafe begin, char * unsafe end)
 {
   for (int i = 0; i < HTTP_FIELD_COUNT; ++i) {
@@ -591,6 +679,14 @@ static char * unsafe serialize_http_fields(const http_t & http, char * unsafe be
   return serialize_string("\r\n", begin, end);
 }
 
+/** Serialize an HTTP packet into the output range.
+ *
+ * @param http The HTTP object.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * unsafe end)
 {
   if (HTTP_REQUEST == http.type) {
