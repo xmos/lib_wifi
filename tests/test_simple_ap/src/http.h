@@ -153,6 +153,15 @@ typedef struct http_t {
  * @returns a parsed http_t.
  */
 PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end);
+
+/** Serialize an HTTP packet into the output range.
+ *
+ * @param http The HTTP object.
+ * @param begin The beginning of the output range.
+ * @param end The end of the output range.
+ *
+ * @returns The new beginning of the output range.
+ */
 char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * unsafe end);
 
 #endif
