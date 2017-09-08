@@ -454,8 +454,10 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end)
 static char * unsafe serialize_char(const char value, char * unsafe begin, char * unsafe end)
 {
   xassert(begin < end);
-  unsafe {*begin = value;}
-  return begin;
+  unsafe {
+    *begin = value;
+    return begin + 1;
+  }
 }
 
 static char * unsafe serialize_string(const char * unsafe string, char * unsafe begin, char * unsafe end)
