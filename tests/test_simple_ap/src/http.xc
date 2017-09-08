@@ -609,6 +609,7 @@ static char * unsafe serialize_http_request(const http_request_t & request, char
  */
 static char * unsafe serialize_status_code(const http_status_code_t status, char * unsafe begin, char * unsafe end)
 {
+  xassert(100 <= status && status <= 999); // status is a 3 digit base-10 number.
   const char c[3] = {
     '0' + (status % 10),
     '0' + ((status / 10) % 10),
