@@ -1,7 +1,6 @@
 // Copyright (c) 2015-2017, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <platform.h>
-/*#include <xscope.h>*/
 #include <quadflash.h>
 #include <print.h>
 #include <string.h>
@@ -97,7 +96,7 @@ void sleep_clock_gen()
   }
 }
 
-void process_xscope(client interface wifi_network_config_if i_conf)
+void setup_wifi(client interface wifi_network_config_if i_conf)
 {
   char network_name[SSID_NAME_SIZE] = "VDA_AP";
   printstrln("XMOS WIFI demo:\n");
@@ -204,7 +203,7 @@ int main(void) {
   ethernet_tx_if i_tx[NUM_ETH_CLIENTS];
 
   par {
-    on tile[1]: process_xscope(i_conf[CONFIG_XSCOPE]);
+    on tile[1]: setup_wifi(i_conf[CONFIG_XSCOPE]);
     on tile[1]: wifi_broadcom_wiced_builtin_spi(i_hal, 1, i_conf, NUM_CONFIG, i_data, p_wifi_spi, i_inputs[0], i_fs[0]);
     on tile[1]: input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]: wifi_ethernet_mac(i_rx[0], i_tx[0], i_hal[0], i_data);
