@@ -99,7 +99,6 @@ void sleep_clock_gen()
 void setup_wifi(client interface wifi_network_config_if i_conf)
 {
   char network_name[SSID_NAME_SIZE] = "VDA_AP";
-  printstrln("XMOS WIFI demo:\n");
   unsigned result = i_conf.start_ap(network_name, strlen(network_name));
   debug_printf("Starting AP %s with result %d\n", network_name, result);
 }
