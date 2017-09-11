@@ -698,3 +698,252 @@ char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * un
   begin = serialize_http_fields(http, begin, end);
   return serialize_string_view(http.body, begin, end);
 }
+
+static unsigned int size_string_view(const string_view_t & view)
+{
+  return view.end - view.begin;
+}
+
+static unsigned int size_http_method(const http_method_t method)
+{
+  switch(method) {
+    case HTTP_METHOD_UNKNOWN:
+      return 0;
+    case HTTP_METHOD_GET:
+      return 3;
+    case HTTP_METHOD_HEAD:
+      return 4;
+    case HTTP_METHOD_POST:
+      return 4;
+    case HTTP_METHOD_PUT:
+      return 3;
+    case HTTP_METHOD_DELETE:
+      return 6;
+    case HTTP_METHOD_TRACE:
+      return 5;
+    case HTTP_METHOD_OPTIONS:
+      return 7;
+    case HTTP_METHOD_CONNECT:
+      return 7;
+    case HTTP_METHOD_PATCH:
+      return 5;
+    case HTCPCP_METHOD_BREW:
+      return 4;
+    case HTCPCP_METHOD_PROPFIND:
+      return 8;
+    case HTCPCP_METHOD_WHEN:
+      return 4;
+  }
+}
+
+static unsigned int size_http_version(const http_version_t version)
+{
+  switch(version) {
+    case HTTP_VERSION_UNKNOWN:
+      return 0;
+    case HTTP_VERSION_1_0:
+      return 8;
+    case HTTP_VERSION_1_1:
+      return 8;
+    case HTCPCP_VERSION_1_0:
+      return 10;
+  }
+}
+
+static unsigned int size_http_target(const string_view_t & view)
+{
+  return size_string_view(view);
+}
+
+static unsigned int size_http_request(const http_request_t & request)
+{
+  return size_http_method(request.method) + 1 +
+    size_string_view(request.target) + 1 +
+    size_http_version(request.version) + 2;
+}
+
+static unsigned int size_http_status_code(const http_status_code_t status_code)
+{
+  return 3;
+}
+
+static unsigned int size_http_response(const http_response_t & response)
+{
+  return size_http_version(response.version) + 1 +
+    size_http_status_code(response.status) + 1 +
+    size_string_view(response.reason) + 2;
+}
+
+static unsigned int size_http_field_name(const http_field_type_t field_type)
+{
+  switch(field_type) {
+    case HTTP_FIELD_UNKNOWN:
+      return 0;
+    case HTTP_FIELD_ACCEPT:
+      return 6;
+    case HTTP_FIELD_ACCEPT_CHARSET:
+      return 14;
+    case HTTP_FIELD_ACCEPT_ENCODING:
+      return 15;
+    case HTTP_FIELD_ACCEPT_LANGUAGE:
+      return 15;
+    case HTTP_FIELD_ACCEPT_DATETIME:
+      return 15;
+    case HTTP_FIELD_AUTHORIZATION:
+      return 13;
+    case HTTP_FIELD_CACHE_CONTROL:
+      return 13;
+    case HTTP_FIELD_CONNECTION:
+      return 10;
+    case HTTP_FIELD_COOKIE:
+      return 6;
+    case HTTP_FIELD_CONTENT_LENGTH:
+      return 14;
+    case HTTP_FIELD_CONTENT_MD5:
+      return 11;
+    case HTTP_FIELD_CONTENT_TYPE:
+      return 12;
+    case HTTP_FIELD_DATE:
+      return 4;
+    case HTTP_FIELD_EXPECT:
+      return 6;
+    case HTTP_FIELD_FORWARDED:
+      return 9;
+    case HTTP_FIELD_FROM:
+      return 4;
+    case HTTP_FIELD_HOST:
+      return 4;
+    case HTTP_FIELD_IF_MATCH:
+      return 8;
+    case HTTP_FIELD_IF_MODIFIED_SINCE:
+      return 17;
+    case HTTP_FIELD_IF_NONE_MATCH:
+      return 13;
+    case HTTP_FIELD_IF_RANGE:
+      return 8;
+    case HTTP_FIELD_IF_UNMODIFIED_SINCE:
+      return 19;
+    case HTTP_FIELD_MAX_FORWARDS:
+      return 12;
+    case HTTP_FIELD_ORIGIN:
+      return 6;
+    case HTTP_FIELD_PRAGMA:
+      return 6;
+    case HTTP_FIELD_PROXY_AUTHORIZATION:
+      return 19;
+    case HTTP_FIELD_RANGE:
+      return 5;
+    case HTTP_FIELD_REFERER:
+      return 7;
+    case HTTP_FIELD_TE:
+      return 2;
+    case HTTP_FIELD_USER_AGENT:
+      return 10;
+    case HTTP_FIELD_UPGRADE:
+      return 7;
+    case HTTP_FIELD_VIA:
+      return 3;
+    case HTTP_FIELD_WARNING:
+      return 7;
+    case HTTP_FIELD_ACCESS_CONTROL_ALLOW_ORIGIN:
+      return 27;
+    case HTTP_FIELD_ACCESS_CONTROL_ALLOW_CREDENTIALS:
+      return 32;
+    case HTTP_FIELD_ACCESS_CONTROL_EXPOSE_HEADERS:
+      return 29;
+    case HTTP_FIELD_ACCESS_CONTROL_MAX_AGE:
+      return 22;
+    case HTTP_FIELD_ACCESS_CONTROL_ALLOW_METHODS:
+      return 28;
+    case HTTP_FIELD_ACCESS_CONTROL_ALLOW_HEADERS:
+      return 28;
+    case HTTP_FIELD_ACCEPT_PATCH:
+      return 12;
+    case HTTP_FIELD_ACCEPT_RANGES:
+      return 13;
+    case HTTP_FIELD_AGE:
+      return 3;
+    case HTTP_FIELD_ALLOW:
+      return 5;
+    case HTTP_FIELD_ALT_SVC:
+      return 7;
+    case HTTP_FIELD_CONTENT_DISPOSITION:
+      return 19;
+    case HTTP_FIELD_CONTENT_ENCODING:
+      return 16;
+    case HTTP_FIELD_CONTENT_LANGUAGE:
+      return 16;
+    case HTTP_FIELD_CONTENT_LOCATION:
+      return 16;
+    case HTTP_FIELD_CONTENT_RANGE:
+      return 13;
+    case HTTP_FIELD_ETAG:
+      return 4;
+    case HTTP_FIELD_EXPIRES:
+      return 7;
+    case HTTP_FIELD_LAST_MODIFIED:
+      return 13;
+    case HTTP_FIELD_LINK:
+      return 4;
+    case HTTP_FIELD_LOCATION:
+      return 8;
+    case HTTP_FIELD_P3P:
+      return 3;
+    case HTTP_FIELD_PROXY_AUTHENTICATE:
+      return 18;
+    case HTTP_FIELD_PUBLIC_KEY_PINS:
+      return 15;
+    case HTTP_FIELD_RETRY_AFTER:
+      return 11;
+    case HTTP_FIELD_SERVER:
+      return 6;
+    case HTTP_FIELD_SET_COOKIE:
+      return 10;
+    case HTTP_FIELD_STRICT_TRANSPORT_SECURITY:
+      return 25;
+    case HTTP_FIELD_TRAILER:
+      return 7;
+    case HTTP_FIELD_TRANSFER_ENCODING:
+      return 17;
+    case HTTP_FIELD_TK:
+      return 2;
+    case HTTP_FIELD_VARY:
+      return 4;
+    case HTTP_FIELD_WWW_AUTHENTICATE:
+      return 16;
+    case HTTP_FIELD_X_FRAME_OPTIONS:
+      return 15;
+    case HTTP_FIELD_ACCEPT_ADDITIONS:
+      return 16;
+  }
+}
+
+static unsigned int size_http_fields(const http_t & http)
+{
+  unsigned int result = 0;
+
+  for (int i = 0; i < HTTP_FIELD_COUNT; ++i) {
+    if (http.fields[i].begin != http.fields[i].end) {
+      result += size_http_field_name(i);
+      result += size_string_view(http.fields[i]);
+      result += 4;
+    }
+  }
+
+  return result + 2;
+}
+
+unsigned int size_http(const http_t & http)
+{
+  if (HTTP_REQUEST == http.type) {
+    return size_http_request(http.start_line.request) +
+      size_http_fields(http) +
+      size_string_view(http.body);
+  } else if (HTTP_RESPONSE == http.type) {
+    return size_http_response(http.start_line.response) +
+      size_http_fields(http) +
+      size_string_view(http.body);
+  } else {
+    return 0;
+  }
+}
