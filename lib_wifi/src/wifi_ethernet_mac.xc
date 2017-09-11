@@ -25,12 +25,14 @@ void wifi_ethernet_mac(server ethernet_rx_if i_rx,
       case i_tx._complete_send_packet(char packet[n], unsigned n, int request_timestamp, size_t ifnum):
         struct pbuf * unsafe buffer = pbuf_alloc(PBUF_RAW_TX, n, PBUF_POOL);
 
-        unsafe {
-          memcpy(buffer->payload, packet, n);
-        }
+        if (NULL != buffer) {
+          unsafe {
+            memcpy(buffer->payload, packet, n);
+          }
 
-        i_data.send_packet(buffer);
-        pbuf_free(buffer);
+          i_data.send_packet(buffer);
+          pbuf_free(buffer);
+        }
         break;
 
       case i_rx.get_index() -> size_t result:
