@@ -699,11 +699,23 @@ char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * un
   return serialize_string_view(http.body, begin, end);
 }
 
+/** Calculate the length of a string_view_t
+ *
+ * @param view The given string_view_t.
+ *
+ * @returns the length of the given string_view_t in bytes.
+ */
 static unsigned int size_string_view(const string_view_t & view)
 {
   return view.end - view.begin;
 }
 
+/** Calculate the length of an HTTP method.
+ *
+ * @param method The given HTTP method.
+ *
+ * @returns the length of the given HTTP method.
+ */
 static unsigned int size_http_method(const http_method_t method)
 {
   switch(method) {
@@ -736,6 +748,12 @@ static unsigned int size_http_method(const http_method_t method)
   }
 }
 
+/** Calculate the length of an HTTP version string.
+ *
+ * @param version The given HTTP version string.
+ *
+ * @returns the length of the given HTTP version string in bytes.
+ */
 static unsigned int size_http_version(const http_version_t version)
 {
   switch(version) {
@@ -750,11 +768,23 @@ static unsigned int size_http_version(const http_version_t version)
   }
 }
 
+/** Calculate the length of an HTTP target string.
+ *
+ * @param view The given HTTP target string.
+ *
+ * @returns the length of the given HTTP target string in bytes.
+ */
 static unsigned int size_http_target(const string_view_t & view)
 {
   return size_string_view(view);
 }
 
+/** Calculate the length of an HTTP request.
+ *
+ * @param request The given HTTP request.
+ *
+ * @returns the length of the given HTTP request in bytes.
+ */
 static unsigned int size_http_request(const http_request_t & request)
 {
   return size_http_method(request.method) + 1 +
@@ -762,11 +792,23 @@ static unsigned int size_http_request(const http_request_t & request)
     size_http_version(request.version) + 2;
 }
 
+/** Calculate the length of an HTTP status code.
+ *
+ * @param status_code The given HTTP status code.
+ *
+ * @returns the length of the given HTTP status code in bytes.
+ */
 static unsigned int size_http_status_code(const http_status_code_t status_code)
 {
   return 3;
 }
 
+/** Calculate the length of an HTTP response.
+ *
+ * @param response The given HTTP response.
+ *
+ * @returns the length of the given HTTP response in bytes.
+ */
 static unsigned int size_http_response(const http_response_t & response)
 {
   return size_http_version(response.version) + 1 +
@@ -774,6 +816,12 @@ static unsigned int size_http_response(const http_response_t & response)
     size_string_view(response.reason) + 2;
 }
 
+/** Calculate the length of an HTTP field name.
+ *
+ * @param field_type The given HTTP field name.
+ *
+ * @returns the length of the given HTTP field name in bytes.
+ */
 static unsigned int size_http_field_name(const http_field_type_t field_type)
 {
   switch(field_type) {
@@ -918,6 +966,12 @@ static unsigned int size_http_field_name(const http_field_type_t field_type)
   }
 }
 
+/** Calculate the length of the fields of an HTTP object.
+ *
+ * @param http The given HTTP object.
+ *
+ * @returns the length of the HTTP fields in bytes.
+ */
 static unsigned int size_http_fields(const http_t & http)
 {
   unsigned int result = 0;
@@ -933,6 +987,12 @@ static unsigned int size_http_fields(const http_t & http)
   return result + 2;
 }
 
+/** Calculate the length of an HTTP object
+ *
+ * @param http The given HTTP object.
+ *
+ * @returns the length of the given HTTP object in bytes.
+ */
 unsigned int size_http(const http_t & http)
 {
   if (HTTP_REQUEST == http.type) {

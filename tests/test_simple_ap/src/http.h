@@ -164,6 +164,12 @@ PARSE_T(http_t) parse_http(const char * unsafe begin, const char * unsafe end);
  */
 char * unsafe serialize_http(const http_t & http, char * unsafe begin, char * unsafe end);
 
+/** Calculate the length of an HTTP object
+ *
+ * @param http The given HTTP object.
+ *
+ * @returns the length of the given HTTP object in bytes.
+ */
 unsigned int size_http(const http_t & http);
 
 #endif
