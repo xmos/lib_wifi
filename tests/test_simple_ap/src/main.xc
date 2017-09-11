@@ -20,7 +20,6 @@
 #include "httpd.h"
 
 #define USE_CMD_LINE_ARGS 1
-#define USE_SLEEP_CLOCK 0
 #define USE_UDP_REFLECTOR 1
 
 #define RX_BUFFER_SIZE 2000
@@ -211,9 +210,6 @@ int main(void) {
     on tile[1]: wifi_ethernet_mac(i_rx[0], i_tx[0], i_hal[0], i_data);
     on tile[1]: ethernet_wifi_cfg(i_conf[CONFIG_XTCP], i_cfg[CFG_TO_XTCP]);
     on tile[0]: xtcp_lwip(i_xtcp, 3, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
-#if USE_SLEEP_CLOCK
-    on tile[0]: sleep_clock_gen();
-#endif
     on tile[0]: filesystem_tasks(i_fs);
     on tile[0]: dhcp_server(i_xtcp[0]);
     on tile[0]: dns_server(i_xtcp[1]);
