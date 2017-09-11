@@ -83,7 +83,7 @@ const static struct {
  * @param end The end of the input range.
  * @param value The character to "parse".
  *
- * @returns a parsed character.
+ * @returns the parsed character.
  */
 PARSE_T(char) static parse_char(const char * unsafe begin, const char * unsafe end, const char value)
 {
@@ -96,6 +96,13 @@ PARSE_T(char) static parse_char(const char * unsafe begin, const char * unsafe e
   }
 }
 
+/** Parse a single character from the input range.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns the parsed character.
+ */
 PARSE_T(char) static parse_any_char(const char * unsafe begin, const char * unsafe end)
 {
   unsafe {
@@ -267,6 +274,13 @@ PARSE_T(http_request_t) static parse_http_request(const char * unsafe begin, con
   return {0, begin, end, result};
 }
 
+/** Parse an HTTP status code.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns the HTTP status code.
+ */
 PARSE_T(http_status_code_t) static parse_http_status_code(const char * unsafe begin, const char * unsafe end)
 {
   int status;
@@ -289,6 +303,13 @@ PARSE_T(http_status_code_t) static parse_http_status_code(const char * unsafe be
   return {0, begin, end, result};
 }
 
+/** Parse an HTTP response.
+ *
+ * @param begin The beginning of the input range.
+ * @param end The end of the input range.
+ *
+ * @returns the HTTP response.
+ */
 PARSE_T(http_response_t) static parse_http_response(const char * unsafe begin, const char * unsafe end)
 {
   int status;
