@@ -2,7 +2,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <xassert.h>
-#include "debug_print.h"
 
 const static struct {
   const char key[33];
