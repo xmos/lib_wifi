@@ -101,8 +101,6 @@ void sleep_clock_gen()
 void process_xscope(client interface wifi_network_config_if i_conf)
 {
   char network_name[SSID_NAME_SIZE] = "VDA_AP";
-  delay_seconds(10);
-
   printstrln("XMOS WIFI demo:\n");
   unsigned result = i_conf.start_ap(network_name, strlen(network_name));
   debug_printf("Starting AP %s with result %d\n", network_name, result);
@@ -212,10 +210,7 @@ int main(void) {
     on tile[1]: input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]: wifi_ethernet_mac(i_rx[0], i_tx[0], i_hal[0], i_data);
     on tile[1]: ethernet_wifi_cfg(i_conf[CONFIG_XTCP], i_cfg[CFG_TO_XTCP]);
-    on tile[0]: {
-      delay_seconds(3);
-      xtcp_lwip(i_xtcp, 3, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
-    }
+    on tile[0]: xtcp_lwip(i_xtcp, 3, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
 #if USE_SLEEP_CLOCK
     on tile[0]: sleep_clock_gen();
 #endif
