@@ -38,7 +38,7 @@ typedef struct dns_record_t {
   unsigned int name_length;
   dns_question_type_t type;
   dns_question_class_t class;
-  unsigned int ttl;
+  int ttl;
   unsigned short payload_length;
   unsigned char * unsafe payload;
   unsigned short index;
