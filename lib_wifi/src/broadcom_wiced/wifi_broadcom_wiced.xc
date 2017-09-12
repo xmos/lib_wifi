@@ -47,6 +47,7 @@ wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address);
 unsigned xcore_wifi_ready_to_transceive(void);
 unsigned xcore_wifi_start_ap(char * unsafe ssid);
+unsigned xcore_wifi_start_ap_wpa(char * unsafe ssid, char * unsafe wpa, unsigned length);
 unsigned xcore_wifi_stop_ap(void);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
@@ -270,6 +271,21 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         }
 
         interface_mode = result ? WWD_AP_INTERFACE : -1;
+        break;
+
+      case (radio_up) => i_conf[int i].start_ap_wpa(char ssid[n], const unsigned n, char key[k], unsigned k) -> unsigned result:
+        char ssid_tmp[MAX_SSID_LENGTH];
+        char key_tmp[WIFI_MAX_KEY_LENGTH];
+        memcpy(ssid_tmp, ssid, sizeof(char)*n);
+        memcpy(key_tmp, key, sizeof(char)*k);
+        ssid_tmp[n] = '\0';
+
+        unsafe {
+          result = xcore_wifi_start_ap_wpa(ssid_tmp, key_tmp, k);
+        }
+
+        interface_mode = result ? WWD_AP_INTERFACE : -1;
+
         break;
 
       case (radio_up) => i_conf[int i].stop_ap(void) -> unsigned result:

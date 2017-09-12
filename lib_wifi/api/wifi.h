@@ -104,6 +104,9 @@ typedef interface wifi_network_config_if {
   [[guarded]] unsigned start_ap(char ssid[n], const unsigned n);
 
   /** TODO: document */
+  [[guarded]] unsigned start_ap_wpa(char ssid[n], const unsigned n, char key[k], unsigned k);
+
+  /** TODO: document */
   [[guarded]] unsigned stop_ap(void);
 
   /** TODO: document */
