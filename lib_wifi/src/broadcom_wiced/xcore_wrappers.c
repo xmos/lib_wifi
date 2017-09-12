@@ -249,7 +249,7 @@ unsigned xcore_wifi_start_ap_wpa(char * ssid, char * wpa, unsigned length)
   wiced_ssid_t wiced_ssid;
   wiced_ssid.length = strlen(ssid);
   memcpy(wiced_ssid.value, ssid, wiced_ssid.length+1);
-  const unsigned result = wwd_wifi_start_ap(&wiced_ssid, WICED_SECURITY_WPA_TKIP_PSK, wpa, length, 5);
+  const unsigned result = wwd_wifi_start_ap(&wiced_ssid, WICED_SECURITY_WPA_AES_PSK, wpa, length, 5);
   return (WWD_SUCCESS == result);
 }
 
