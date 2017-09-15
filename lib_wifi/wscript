@@ -1,0 +1,86 @@
+def use_module(bld):
+    # lib_xtcp must be built with LWIP support when using Broadcom WICED WiFi
+    bld.env.LWIP_XTCP = 1
+
+    depends_on = [
+        'lib_xtcp(>=5.1.0)', 'lib_ethernet(>=3.0.3)', 'lib_gpio(>=1.0.0)',
+        'lib_filesystem(>=0.0.1)', 'lib_xassert(>=2.0.0)',
+        'lib_logging(>=2.0.0)', 'lib_locks(>=2.0.2)'
+    ]
+
+    if not bld.env.WICED_SDK_VERSION:
+        bld.env.WICED_SDK_VERSION = '3.3.1'
+    if not bld.env.WICED_BUS:
+        bld.env.WICED_BUS = 'SPI'
+    if not bld.env.WICED_WLAN_CHIP:
+        bld.env.WICED_WLAN_CHIP = '43362'
+    if not bld.env.WICED_WLAN_CHIP_REVISION:
+        bld.env.WICED_WLAN_CHIP_REVISION = 'A2'
+
+    if not bld.env.WIFI_MODULE_MURATA_SN8000:
+        bld.env.WIFI_MODULE_MURATA_SN8000 = '1'
+
+    sdk_path = 'WICED-SDK-{}'.format(bld.env.WICED_SDK_VERSION)
+    include_dirs = [
+        'api', 'src', 'src/broadcom_wiced', 'src/broadcom_wiced/network',
+        'src/broadcom_wiced/platform',
+        'src/broadcom_wiced/platform/nvram_images', 'src/broadcom_wiced/rtos',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/include',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/libraries/utilities/TLV',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/include',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/include/network',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/include/platform',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/include/RTOS',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/internal',
+        'src/broadcom_wiced/sdk/' + sdk_path +
+        '/WICED/WWD/internal/bus_protocols', 'src/broadcom_wiced/sdk/' +
+        sdk_path + '/WICED/WWD/internal/bus_protocols/' + bld.env.WICED_BUS,
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/internal/chips/' +
+        bld.env.WICED_WLAN_CHIP + bld.env.WICED_WLAN_CHIP_REVISION
+    ]
+
+    source_dirs = [
+        'src', 'src/broadcom_wiced', 'src/broadcom_wiced/network',
+        'src/broadcom_wiced/platform',
+        'src/broadcom_wiced/platform/' + bld.env.WICED_BUS,
+        'src/broadcom_wiced/rtos',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/include',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/libraries/utilities/TLV',
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/internal',
+        'src/broadcom_wiced/sdk/' + sdk_path +
+        '/WICED/WWD/internal/bus_protocols', 'src/broadcom_wiced/sdk/' +
+        sdk_path + '/WICED/WWD/internal/bus_protocols/' + bld.env.WICED_BUS,
+        'src/broadcom_wiced/sdk/' + sdk_path + '/WICED/WWD/internal/chips/' +
+        bld.env.WICED_WLAN_CHIP + bld.env.WICED_WLAN_CHIP_REVISION
+    ]
+
+    gen_module_flags = [
+        '-DWICED_WLAN_CHIP=' + bld.env.WICED_WLAN_CHIP,
+        '-DWICED_WLAN_CHIP_REVISION=' + bld.env.WICED_WLAN_CHIP_REVISION,
+        '-DWIFI_MODULE_MURATA_SN8000=' + bld.env.WIFI_MODULE_MURATA_SN8000,
+        '-DWICED_HOST_REQUIRES_ALIGNED_MEMORY_ACCESS=1'
+    ]
+
+    bld.env.MODULE_XCC_C_FLAGS = bld.env.XCC_C_FLAGS + ['-DALWAYS_INLINE= '
+                                                        ] + gen_module_flags
+    bld.env.MODULE_XCC_XC_FLAGS = bld.env.XCC_XC_FLAGS + [
+        '-Wno-unknown-pragmas'
+    ] + gen_module_flags
+    # NOTE: Not setting -DWWD_DIRECT_RESOURCES in MODULE_XCC_C_FLAGS
+
+    bld.env['XCC_FLAGS_wifi_spi.xc'] = ['-O2']
+
+    source = []
+    for sd in source_dirs:
+        exts = ('/*.c', '/*.xc', '/*.S')
+        source += bld.path.ant_glob([sd + e for e in exts])
+
+    exclude_files = ['wwd_thread.c']
+    source = [s for s in source if not s.name in exclude_files]
+
+    bld.module(
+        source=source,
+        includes=include_dirs,
+        depends_on=depends_on,
+        version='0.0.2')
