@@ -1,4 +1,10 @@
+import configure
+
+
 def use_module(bld):
+    if not bld.path.find_node('src/broadcom_wiced/sdk'):
+        configure.run()
+
     # lib_xtcp must be built with LWIP support when using Broadcom WICED WiFi
     bld.env.LWIP_XTCP = 1
 
