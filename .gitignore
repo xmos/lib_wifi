@@ -22,3 +22,5 @@ test_results.csv
 **/host_simple_wifi/host
 **/test_simple_wifi/wifi_bcm_43362A2
 **/run_wrapper/run_wrapper*
+build
+.lock-waf_*
