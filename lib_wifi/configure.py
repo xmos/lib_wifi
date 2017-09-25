@@ -6,7 +6,7 @@ import subprocess
 import shutil
 import stat
 
-if __name__ == "__main__":
+def run():
     # Extract WICED_SDK_VERSION value from module_build_info
     wiced_version = None
     lib_wifi_lib_dir = os.path.dirname(os.path.realpath(__file__))
@@ -57,3 +57,6 @@ if __name__ == "__main__":
     with open(os.path.join(wiced_clone_point, "xcore_compat.patch"), "w") as f:
         subprocess.call(["git", "diff", "-p", "v" + wiced_version, "HEAD"],
                         stdout=f, cwd=wiced_repo)
+
+if __name__ == "__main__":
+    run()
