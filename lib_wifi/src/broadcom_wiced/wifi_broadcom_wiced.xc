@@ -231,7 +231,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
         memcpy(local_key, security_key, key_length);
         result = xcore_wifi_join_network_at_index(index, local_key, key_length);
-        interface_mode = result ? WWD_AP_INTERFACE : -1;
+        interface_mode = result ? WWD_STA_INTERFACE : -1;
         break;
 
       case (radio_up) => i_conf[int i].join_network_by_name(char name[SSID_NAME_SIZE],
@@ -249,7 +249,7 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         int index = xcore_wifi_get_network_index(local_name);
         if (index != -1) {
           result = xcore_wifi_join_network_at_index(index, local_key, key_length);
-          interface_mode = result ? WWD_AP_INTERFACE : -1;
+          interface_mode = result ? WWD_STA_INTERFACE : -1;
         } else {
           debug_printf("Invalid network name\n");
         }
