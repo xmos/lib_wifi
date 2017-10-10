@@ -217,7 +217,7 @@ unsigned xcore_wifi_join_network_at_index(size_t index,
                                   scan_result_ptr->security,
                                   security_key, key_length, NULL);
   debug_printf("Join result = %d\n", result);
-  return result;
+  return (WWD_SUCCESS == result);
 }
 
 unsigned xcore_wifi_leave_network(void)
