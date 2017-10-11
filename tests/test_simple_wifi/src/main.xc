@@ -64,7 +64,8 @@ xtcp_ipconfig_t ipconfig = {
                             { 0, 0, 0, 0 }  // gateway (e.g. 192,168,0,1)
 };
 
-void filesystem_tasks(server interface fs_basic_if i_fs[]) {
+void filesystem_tasks(server interface fs_basic_if i_fs[1])
+{
   interface fs_storage_media_if i_media;
   fl_QuadDeviceSpec qspi_spec = FL_QUADDEVICE_ISSI_IS25LQ032B;
 
