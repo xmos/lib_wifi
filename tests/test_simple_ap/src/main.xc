@@ -99,7 +99,8 @@ void sleep_clock_gen()
 void setup_wifi(client interface wifi_network_config_if i_conf)
 {
   char network_name[SSID_NAME_SIZE] = "VDA_AP";
-  unsigned result = i_conf.start_ap(network_name, strlen(network_name));
+  char key[] = "some_key_123";
+  unsigned result = i_conf.start_ap_wpa(network_name, strlen(network_name), key, strlen(key));
   debug_printf("Starting AP %s with result %d\n", network_name, result);
 }
 
@@ -122,6 +123,7 @@ enum cfg_clients {
 
 #define ETHERNET_SMI_PHY_ADDRESS (0)
 
+[[distributable]]
 void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server ethernet_cfg_if i_cfg)
 {
   while (1) {
@@ -190,6 +192,18 @@ void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server 
   }
 }
 
+[[combinable]]
+void dns_handler(server dns_if i_dns)
+{
+  while(1) {
+    select {
+      case i_dns.question(const dns_question_type_t _a, const dns_question_class_t _b, const char name[n], const unsigned n) -> dns_ip4_addr_t result:
+        result = 0x0100A8C0;
+        break;
+    }
+  }
+}
+
 int main(void) {
   interface wifi_hal_if i_hal[1];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
@@ -197,6 +211,7 @@ int main(void) {
   interface input_gpio_if i_inputs[1];
   interface fs_basic_if i_fs[1];
   xtcp_if i_xtcp[3];
+  dns_if i_dns;
   ethernet_cfg_if i_cfg[NUM_CFG_CLIENTS];
   ethernet_rx_if i_rx[NUM_ETH_CLIENTS];
   ethernet_tx_if i_tx[NUM_ETH_CLIENTS];
@@ -210,8 +225,9 @@ int main(void) {
     on tile[0]: xtcp_lwip(i_xtcp, 3, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
     on tile[0]: filesystem_tasks(i_fs);
     on tile[0]: dhcp_server(i_xtcp[0]);
-    on tile[0]: dns_server(i_xtcp[1]);
+    on tile[0]: dns_server(i_dns, i_xtcp[1]);
     on tile[0]: xhttpd(i_xtcp[2]);
+    on tile[0]: dns_handler(i_dns);
   }
 
   return 0;
