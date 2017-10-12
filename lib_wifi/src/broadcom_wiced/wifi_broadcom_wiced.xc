@@ -47,7 +47,7 @@ wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
 unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address);
 unsigned xcore_wifi_ready_to_transceive(void);
 unsigned xcore_wifi_start_ap(char * unsafe ssid);
-unsigned xcore_wifi_start_ap_wpa(char * unsafe ssid, char * unsafe wpa, unsigned length);
+unsigned xcore_wifi_start_ap_wpa(char * unsafe ssid, uint8_t * unsafe wpa, unsigned length);
 unsigned xcore_wifi_stop_ap(void);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {

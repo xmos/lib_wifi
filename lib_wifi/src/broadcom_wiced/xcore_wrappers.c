@@ -244,7 +244,7 @@ unsigned xcore_wifi_start_ap(char * ssid)
   return (WWD_SUCCESS == result);
 }
 
-unsigned xcore_wifi_start_ap_wpa(char * ssid, char * wpa, unsigned length)
+unsigned xcore_wifi_start_ap_wpa(char * ssid, uint8_t * wpa, unsigned length)
 {
   wiced_ssid_t wiced_ssid;
   wiced_ssid.length = strlen(ssid);
