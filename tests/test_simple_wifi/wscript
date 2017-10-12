@@ -5,6 +5,7 @@ def configure(conf):
 
 def build(bld):
     bld.env.LWIP_XTCP = 1
+    bld.env.XTCP_STACK = 'LWIP'
     bld.env.TARGET_ARCH = 'src/WIFI-MIC-ARRAY-1V0.xn'
     bld.env.XSCOPE = 'src/config.xscope'
 
@@ -22,7 +23,7 @@ def build(bld):
     # TODO: remove above warning suppressions
     bld.env.XCC_MAP_FLAGS = ['-report', '-lquadflash']
 
-    depends_on = ['lib_wifi', 'lib_logging', 'lib_gpio', 'lib_filesystem']
+    depends_on = ['lib_wifi', 'lib_logging', 'lib_gpio', 'lib_filesystem', 'lib_dhcp']
 
     source = bld.path.ant_glob(['src/*.xc', 'src/*.c'])
 
