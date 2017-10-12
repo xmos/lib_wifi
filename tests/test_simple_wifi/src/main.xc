@@ -1,7 +1,6 @@
 // Copyright (c) 2015-2017, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <platform.h>
-#include <xscope.h>
 #include <quadflash.h>
 #include <print.h>
 #include <string.h>
@@ -22,10 +21,8 @@
 #define USE_UDP_REFLECTOR 1
 
 #define RX_BUFFER_SIZE 2000
-#define INCOMING_PORT 15533
 #define BROADCAST_INTERVAL 600000000
 #define BROADCAST_PORT 15534
-#define BROADCAST_ADDR {255,255,255,255}
 #define BROADCAST_MSG "XMOS Broadcast\n"
 #define INIT_VAL -1
 
@@ -59,9 +56,9 @@ fl_QSPIPorts qspi_flash_ports = {
  * Leave with all 0 values to use DHCP/AutoIP
  */
 xtcp_ipconfig_t ipconfig = {
-                            { 0, 0, 0, 0 }, // ip address (e.g. 192,168,0,2)
-                            { 0, 0, 0, 0 }, // netmask (e.g. 255,255,255,0)
-                            { 0, 0, 0, 0 }  // gateway (e.g. 192,168,0,1)
+  { 0, 0, 0, 0 }, // ip address (e.g. 192,168,0,2)
+  { 0, 0, 0, 0 }, // netmask (e.g. 255,255,255,0)
+  { 0, 0, 0, 0 }  // gateway (e.g. 192,168,0,1)
 };
 
 void filesystem_tasks(server interface fs_basic_if i_fs[1])
@@ -76,140 +73,14 @@ void filesystem_tasks(server interface fs_basic_if i_fs[1])
   }
 }
 
-void sleep_clock_gen() {
-  // 32.768kHz to bit 3 of p_lpo_sleep_clk
-  timer t;
-  unsigned delay;
-  unsigned clk_signal = 0x8; // Bit 3
-  t :> delay;
-  delay += 1526;
-  unsigned counts[] = {1526, 1526, 1526, 1525, 1526, 1526, 1525};
-  unsigned i = 0;
-  while (1) {
-    select {
-      case t when timerafter(delay) :> void:
-        p_lpo_sleep_clk <: clk_signal;
-        clk_signal = (~clk_signal) & 0x8;
-        delay += counts[i];
-        i = (i+1) % 6;
-        break;
-    }
-  }
-}
-
-/** Simple UDP reflection thread.
- *
- * This thread does two things:
- *
- *   - Reponds to incoming packets on port INCOMING_PORT and
- *     with a packet with the same content back to the sender.
- *   - Periodically sends out a fixed packet to a broadcast IP address.
- *
- */
-void udp_reflect(client xtcp_if i_xtcp)
+void configure_wifi(client interface wifi_network_config_if i_conf)
 {
-  xtcp_connection_t conn = i_xtcp.socket(XTCP_PROTOCOL_TCP);
-  timer tmr;
-  unsigned int time;
-  char rx_buffer[RX_BUFFER_SIZE];
+  char network_name[SSID_NAME_SIZE] = "test_network";
+  char key[] = "test_password";
 
-  // Instruct server to listen and create new connections on the incoming port
-  i_xtcp.listen(conn, INCOMING_PORT, XTCP_PROTOCOL_TCP);
-
-  tmr :> time;
-  while (1) {
-    select {
-    case i_xtcp.event_ready():
-      xtcp_connection_t conn_tmp;
-      const xtcp_event_type_t event = i_xtcp.get_event(conn_tmp);
-
-      switch (event)
-      {
-        case XTCP_IFUP:
-          debug_printf("IFUP\n");
-          break;
-
-        case XTCP_IFDOWN:
-          debug_printf("IFDOWN\n");
-          break;
-
-        case XTCP_NEW_CONNECTION:
-          debug_printf("New connection to listening port: %d\n", conn_tmp.local_port);
-          break;
-
-        case XTCP_RECV_DATA:
-          const int result = i_xtcp.recv(conn_tmp, rx_buffer, RX_BUFFER_SIZE);
-
-          if (result > 0) {
-            i_xtcp.send(conn_tmp, rx_buffer, result);
-          } else {
-            i_xtcp.close(conn_tmp);
-          }
-          break;
-
-        case XTCP_TIMED_OUT:
-        case XTCP_ABORTED:
-        case XTCP_CLOSED:
-          debug_printf("Closed connection: %d\n", conn.id);
-          i_xtcp.close(conn_tmp);
-          break;
-        default:
-          break;
-      }
-      break;
-
-    // This is the periodic case, it occurs every BROADCAST_INTERVAL
-    // timer ticks
-    case tmr when timerafter(time + BROADCAST_INTERVAL) :> void:
-      tmr :> time;
-      break;
-    }
-  }
-}
-
-[[combinable]]
-void process_xscope(chanend xscope_data_in,
-                    client interface wifi_network_config_if i_conf) {
-  int bytesRead = 0;
-  unsigned char buffer[256];
-
-#if USE_CMD_LINE_ARGS
-  char network_name[SSID_NAME_SIZE] = "";
-  char network_key[WIFI_MAX_KEY_LENGTH] = "";
-  parse_command_line(1, network_name);
-  parse_command_line(2, network_key);
-
-  // Join the network
-  delay_seconds(3);
   i_conf.scan_for_networks();
-  i_conf.join_network_by_name(network_name, network_key, strlen(network_key));
-#endif
-
-  xscope_connect_data_from_host(xscope_data_in);
-
-  printstrln("XMOS WIFI demo:\n");
-
-  while (1) {
-    select {
-      case xscope_data_from_host(xscope_data_in, buffer, bytesRead):
-      if (bytesRead) {
-        if (strcmp(buffer, "scan") == 0) {
-          i_conf.scan_for_networks();
-
-        } else if (strcmp(buffer, "join") == 0) {
-          xscope_data_from_host(xscope_data_in, buffer, bytesRead);
-          xassert(bytesRead && msg("Scan index data too short\n"));
-          size_t index = strtoul(buffer, NULL, 0);
-          xscope_data_from_host(xscope_data_in, buffer, bytesRead);
-          xassert(bytesRead <= WIFI_MAX_KEY_LENGTH &&
-                  msg("Security key data too long\n"));
-          // -1 due to \n being sent
-          i_conf.join_network_by_index(index, buffer, bytesRead-1);
-        }
-      }
-      break;
-    }
-  }
+  const unsigned result = i_conf.join_network_by_name(network_name, key, strlen(key));
+  debug_printf("Joining network %s with result %d\n", network_name, result);
 }
 
 typedef enum {
@@ -299,7 +170,8 @@ void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server 
   }
 }
 
-int main(void) {
+int main(void)
+{
   interface wifi_hal_if i_hal[1];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
   interface xtcp_pbuf_if i_data;
@@ -309,26 +181,15 @@ int main(void) {
   ethernet_cfg_if i_cfg[NUM_CFG_CLIENTS];
   ethernet_rx_if i_rx[NUM_ETH_CLIENTS];
   ethernet_tx_if i_tx[NUM_ETH_CLIENTS];
-  chan c_xscope_data_in;
 
   par {
-    xscope_host_data(c_xscope_data_in);
-
-    on tile[1]: process_xscope(c_xscope_data_in, i_conf[CONFIG_XSCOPE]);
-    on tile[1]: wifi_broadcom_wiced_builtin_spi(i_hal, 1, i_conf, NUM_CONFIG,
-                                                i_data, p_wifi_spi, i_inputs[0],
-                                                i_fs[0]);
+    on tile[1]: configure_wifi(i_conf[CONFIG_XSCOPE]);
+    on tile[1]: wifi_broadcom_wiced_builtin_spi(i_hal, 1, i_conf, NUM_CONFIG, i_data, p_wifi_spi, i_inputs[0], i_fs[0]);
     on tile[1]: input_gpio_with_events(i_inputs, 1, p_irq, null);
     on tile[1]: wifi_ethernet_mac(i_rx[0], i_tx[0], i_hal[0], i_data);
     on tile[1]: ethernet_wifi_cfg(i_conf[CONFIG_XTCP], i_cfg[CFG_TO_XTCP]);
     on tile[0]: xtcp_lwip(i_xtcp, 1, null, i_cfg[CFG_TO_XTCP], i_rx[ETH_TO_XTCP], i_tx[ETH_TO_XTCP], null, ETHERNET_SMI_PHY_ADDRESS, null, null, ipconfig);
-#if USE_SLEEP_CLOCK
-    on tile[0]: sleep_clock_gen();
-#endif
     on tile[0]: filesystem_tasks(i_fs);
-#if USE_UDP_REFLECTOR
-    on tile[0]: udp_reflect(i_xtcp[0]);
-#endif
   }
 
   return 0;
