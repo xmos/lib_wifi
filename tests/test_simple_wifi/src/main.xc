@@ -16,17 +16,7 @@
 #include "debug_print.h"
 #include "xassert.h"
 
-#define USE_CMD_LINE_ARGS 1
-#define USE_SLEEP_CLOCK 0
-#define USE_UDP_REFLECTOR 1
-
-#define RX_BUFFER_SIZE 2000
-#define BROADCAST_INTERVAL 600000000
-#define BROADCAST_PORT 15534
-#define BROADCAST_MSG "XMOS Broadcast\n"
-#define INIT_VAL -1
-
-enum flag_status {TRUE=1, FALSE=0};
+#define ETHERNET_SMI_PHY_ADDRESS (0)
 
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
@@ -99,8 +89,6 @@ enum cfg_clients {
   CFG_TO_PHY_DRIVER,
   NUM_CFG_CLIENTS
 };
-
-#define ETHERNET_SMI_PHY_ADDRESS (0)
 
 void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server ethernet_cfg_if i_cfg)
 {
