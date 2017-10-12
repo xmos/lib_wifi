@@ -6,7 +6,7 @@ def configure(conf):
 def build(bld):
     bld.env.LWIP_XTCP = 1
     bld.env.XTCP_STACK = 'LWIP'
-    bld.env.TARGET_ARCH = 'src/WIFI-MIC-ARRAY-1V0.xn'
+    bld.env.TARGET_ARCH = 'SLICEKIT-X200'
     bld.env.XSCOPE = 'src/config.xscope'
 
     gen_xcc_flags = [
