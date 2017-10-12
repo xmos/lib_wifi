@@ -216,7 +216,7 @@ unsigned xcore_wifi_join_network_at_index(size_t index,
   unsigned result = wwd_wifi_join(&scan_result_ptr->SSID,
                                   scan_result_ptr->security,
                                   security_key, key_length, NULL);
-  debug_printf("Join result = %d\n", result);
+  debug_printf("Join result = %d\n", result==WWD_SUCCESS);
   return (WWD_SUCCESS == result);
 }
 
