@@ -34,10 +34,10 @@ enum flag_status {TRUE=1, FALSE=0};
 out port p_lpo_sleep_clk = on tile[0]: XS1_PORT_4D; // Bit 3
 
 wifi_spi_ports p_wifi_spi = {
-  on tile[1]: XS1_PORT_1N,
-  on tile[1]: XS1_PORT_1M,
-  on tile[1]: XS1_PORT_1L,
-  on tile[1]: XS1_PORT_4E,
+  on tile[1]: XS1_PORT_1G,
+  on tile[1]: XS1_PORT_1C,
+  on tile[1]: XS1_PORT_1B,
+  on tile[1]: XS1_PORT_1F,
   0, // CS on bit 0 of port 4E
   on tile[1]: XS1_CLKBLK_3,
   1, // 100/4 (2*2n)
@@ -46,7 +46,7 @@ wifi_spi_ports p_wifi_spi = {
 };
 
 // Input port used for IRQ interrupt line
-in port p_irq = on tile[1]: XS1_PORT_4F;
+in port p_irq = on tile[1]: XS1_PORT_4B;
 
 fl_QSPIPorts qspi_flash_ports = {
   PORT_SQI_CS,
