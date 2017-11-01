@@ -1,3 +1,4 @@
+// Copyright (c) 2017, XMOS Ltd, All rights reserved
 #include "wifi.h"
 #include "debug_print.h"
 #include "lwip/pbuf.h"
