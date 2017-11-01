@@ -144,6 +144,9 @@ void wifi_ethernet_mac(server ethernet_rx_if i_rx,
                        client interface wifi_hal_if i_hal,
                        client interface xtcp_pbuf_if i_data
                      );
+
+void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server ethernet_cfg_if i_cfg);
+                     
 #endif // __XC__
 
 #endif // __wifi_h__
