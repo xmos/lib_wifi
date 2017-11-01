@@ -123,18 +123,6 @@ enum cfg_clients {
 
 #define ETHERNET_SMI_PHY_ADDRESS (0)
 
-[[combinable]]
-void dns_handler(server dns_if i_dns)
-{
-  while(1) {
-    select {
-      case i_dns.question(const dns_question_type_t _a, const dns_question_class_t _b, const char name[n], const unsigned n) -> dns_ip4_addr_t result:
-        result = 0x0100A8C0;
-        break;
-    }
-  }
-}
-
 int main(void) {
   interface wifi_hal_if i_hal[1];
   interface wifi_network_config_if i_conf[NUM_CONFIG];
@@ -158,7 +146,6 @@ int main(void) {
     on tile[0]: dhcp_server(i_xtcp[0]);
     on tile[0]: dns_server(i_dns, i_xtcp[1]);
     on tile[0]: xhttpd(i_xtcp[2]);
-    on tile[0]: dns_handler(i_dns);
   }
 
   return 0;
