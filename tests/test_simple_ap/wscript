@@ -1,0 +1,30 @@
+def configure(conf):
+    conf.env.PROJECT_ROOT = '../../../'
+    conf.load('xwaf.compiler_xcc')
+
+
+def build(bld):
+    bld.env.LWIP_XTCP = 1
+    bld.env.XTCP_STACK = 'LWIP'
+    bld.env.TARGET_ARCH = 'src/WIFI-MIC-ARRAY-1V0.xn'
+    bld.env.XSCOPE = 'src/config.xscope'
+
+    gen_xcc_flags = [
+        '-g', '-Os', '-save-temps', '-fxscope', '-DLWIP_XTCP=1',
+        '-DXASSERT_ENABLE_ASSERTIONS=1', '-DXASSERT_ENABLE_DEBUG=1',
+        '-fno-inline-functions'
+    ]
+
+    bld.env.XCC_FLAGS = []
+    bld.env.XCC_C_FLAGS = gen_xcc_flags + [
+        '-Wno-ignored-attributes', '-Wno-typedef-redefinition'
+    ]
+    bld.env.XCC_XC_FLAGS = gen_xcc_flags + ['-Wno-unknown-pragmas']
+    # TODO: remove above warning suppressions
+    bld.env.XCC_MAP_FLAGS = ['-report', '-lquadflash']
+
+    depends_on = ['lib_wifi', 'lib_logging', 'lib_gpio', 'lib_filesystem', 'lib_dhcp', 'lib_http', 'lib_dns']
+
+    source = bld.path.ant_glob(['src/*.xc', 'src/*.c'])
+
+    bld.program(source=source, depends_on=depends_on)
