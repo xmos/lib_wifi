@@ -203,7 +203,6 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
         break;
 
       case (radio_up) => i_conf[int i].get_link_state() -> ethernet_link_state_t state:
-
         if (xcore_wifi_ready_to_transceive()) {
           state = ETHERNET_LINK_UP;
         } else {
@@ -306,7 +305,6 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
       case i_data.send_packet(pbuf_p p):
         // Queue the packet for the WIFI to send it
-        // debug_printf("Internal send_packet\n");
         // Increment the reference count as LWIP assumes packets have to be
         // deleted, and so does the WIFI library
         if(interface_mode != -1) {
