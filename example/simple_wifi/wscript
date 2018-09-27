@@ -23,7 +23,7 @@ def build(bld):
     # TODO: remove above warning suppressions
     bld.env.XCC_MAP_FLAGS = ['-report', '-lquadflash']
 
-    depends_on = ['lib_wifi', 'lib_logging', 'lib_gpio', 'lib_filesystem', 'lib_dhcp']
+    depends_on = ['lib_wifi', 'lib_logging', 'lib_gpio', 'lib_filesystem', 'lib_mqtt']
 
     source = bld.path.ant_glob(['src/*.xc', 'src/*.c'])
 

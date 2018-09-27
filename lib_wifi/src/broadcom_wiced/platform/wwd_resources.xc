@@ -61,7 +61,7 @@ resource_result_t open_file_if_required(wwd_resource_t resource) {
       // If the file is not yet open, assume the filesystem is not yet mounted
       result = i_fs_global.mount();
       if (result != FS_RES_OK) {
-        debug_printf("Failed to mount filesystem\n");
+        debug_printf("Failed to mount filesystem with code %d\n", result);
         return RESOURCE_FILE_OPEN_FAIL;
       }
       char filename[] = FIRMWARE_FILENAME;

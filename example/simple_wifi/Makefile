@@ -24,15 +24,13 @@ GEN_XCC_FLAGS = -g -Os -save-temps -fxscope -DLWIP_XTCP=1 -DXASSERT_ENABLE_ASSER
 XCC_FLAGS = # Using GEN_XCC_FLAGS to allow for XCC_C_FLAGS to tidy lib_xtcp
 XCC_C_FLAGS = $(GEN_XCC_FLAGS) -Wno-ignored-attributes -Wno-typedef-redefinition
 XCC_XC_FLAGS = $(GEN_XCC_FLAGS) -Wno-unknown-pragmas
-# TODO: remove above warning suppressions
 XCC_MAP_FLAGS = -report -lquadflash
 
 ENABLE_STAGED_BUILD = 1
-# TODO: remove above line
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_wifi lib_logging lib_gpio lib_filesystem lib_dhcp
+USED_MODULES = lib_wifi lib_logging lib_gpio lib_filesystem lib_dhcp lib_mqtt
 
 EXCLUDE_FILES = main.cpp
 
