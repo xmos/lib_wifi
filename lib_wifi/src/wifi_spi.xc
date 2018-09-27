@@ -77,7 +77,11 @@ void wifi_spi_transfer(unsigned num_bytes, char *buffer, wifi_spi_ports &p,
 
   partout_timed(p.clk, 16, 0xAAAA, port_time);
   partout_timed(p.mosi, 16, zip(buffer[0], buffer[0], 0), port_time);
+
+  // porttime_p.miso = port_time+15
   asm volatile ("setpt res[%0], %1":: "r"(p.miso), "r"(port_time+15));
+
+  // shiftcount_p.miso = 16
   asm volatile ("setpsc res[%0], %1":: "r"(p.miso), "r"(16));
 
   unsigned i;
@@ -85,12 +89,18 @@ void wifi_spi_transfer(unsigned num_bytes, char *buffer, wifi_spi_ports &p,
   for (i = 1; i < num_bytes; i++) {
     partout(p.clk, 16, 0xAAAA);
     partout(p.mosi, 16, zip(buffer[i], buffer[i], 0));
+
+    // p.miso :> tmp
     asm volatile ("in %0, res[%1]": "=r"(tmp) : "r"(p.miso));
+
+    // shiftcount_p.miso = 16
     asm volatile ("setpsc res[%0], %1":: "r"(p.miso), "r"(16));
     if (direction != WIFI_SPI_WRITE) {
       {buffer[i-1], void} = unzip(tmp >> 16, 0);
     }
   }
+
+  // p.miso :> tmp
   asm volatile ("in %0, res[%1]": "=r"(tmp) : "r"(p.miso));
   if (direction != WIFI_SPI_WRITE) {
     {buffer[i-1], void} = unzip(tmp >> 16, 0);

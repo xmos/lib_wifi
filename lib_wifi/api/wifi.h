@@ -38,35 +38,34 @@ typedef interface wifi_hal_if {
   void init_radio();
 
   /** TODO: document */
-  void get_hardware_status();
+  [[guarded]] void get_hardware_status();
 
   /** TODO: document */
-  void get_chipset_power_mode();
+  [[guarded]] void get_chipset_power_mode();
 
   /** TODO: document */
-  void set_chipset_power_mode(); // required?
+  [[guarded]] void set_chipset_power_mode(); // required?
 
   /** TODO: document */
-  void get_radio_tx_power();
+  [[guarded]] void get_radio_tx_power();
 
   /** TODO: document */
-  void set_radio_tx_power();
+  [[guarded]] void set_radio_tx_power();
 
   /** TODO: document */
-  void get_radio_state();
+  [[guarded]] void get_radio_state();
 
   /** TODO: document */
-  void set_radio_state(); // on/off
+  [[guarded]] void set_radio_state(); // on/off
 
   /** TODO: document */
-  void set_antenna_mode(); //auto select/manual ant1/manual ant2/etc.
+  [[guarded]] void set_antenna_mode(); //auto select/manual ant1/manual ant2/etc.
 
   /** TODO: document */
-  void get_channel(); // move to wifi_network_config_if?
+  [[guarded]] void get_channel(); // move to wifi_network_config_if?
 
   /** TODO: document */
-  void set_channel(); // move to wifi_network_config_if?
-
+  [[guarded]] void set_channel(); // move to wifi_network_config_if?
 } wifi_hal_if;
 
 /** WiFi/application configuration interface - ethernet.h equivalent
@@ -75,34 +74,43 @@ typedef interface wifi_hal_if {
 typedef interface wifi_network_config_if {
 
   /** TODO: document */
-  wifi_res_t get_mac_address(uint8_t mac_address[6]);
+  [[guarded]] wifi_res_t get_mac_address(uint8_t mac_address[6]);
 
   /** TODO: document */
-  void set_mac_address();
+  [[guarded]] void set_mac_address(uint8_t mac_address[6]);
 
   /** TODO: document */
-  ethernet_link_state_t get_link_state();
+  [[guarded]] ethernet_link_state_t get_link_state();
 
   /** TODO: document */
-  void set_link_state(ethernet_link_state_t state); // up/down
+  [[guarded]] void set_link_state(ethernet_link_state_t state); // up/down
 
   /** TODO: document */
-  void set_networking_mode(); // AP, AD Hoc, client, etc.
+  [[guarded]] void set_networking_mode(); // AP, AD Hoc, client, etc.
 
   // Client mode functions
   /** TODO: document */
-  size_t scan_for_networks();
+  [[guarded]] size_t scan_for_networks();
 
   /** TODO: document */
-  unsigned join_network_by_name(char name[SSID_NAME_SIZE], uint8_t security_key[key_length],
+  [[guarded]] unsigned join_network_by_name(char name[SSID_NAME_SIZE], uint8_t security_key[key_length],
                         size_t key_length);
 
   /** TODO: document */
-  unsigned join_network_by_index(size_t index, uint8_t security_key[key_length],
+  [[guarded]] unsigned join_network_by_index(size_t index, uint8_t security_key[key_length],
                         size_t key_length);
 
   /** TODO: document */
-  void leave_network(size_t index); // can you be connected to more than one?
+  [[guarded]] unsigned start_ap(char ssid[n], const unsigned n);
+
+  /** TODO: document */
+  [[guarded]] unsigned start_ap_wpa(char ssid[n], const unsigned n, char key[k], unsigned k);
+
+  /** TODO: document */
+  [[guarded]] unsigned stop_ap(void);
+
+  /** TODO: document */
+  [[guarded]] void leave_network(size_t index); // can you be connected to more than one?
 
   // TODO: MAC address filtering/ethertype filtering/
 
@@ -129,6 +137,16 @@ void xtcp_lwip_wifi(chanend xtcp[n], size_t n,
                     client interface xtcp_pbuf_if i_wifi_data,
                     xtcp_ipconfig_t &ipconfig);
 
+/** TODO: document */
+[[combinable]]
+void wifi_ethernet_mac(server ethernet_rx_if i_rx,
+                       server ethernet_tx_if i_tx,
+                       client interface wifi_hal_if i_hal,
+                       client interface xtcp_pbuf_if i_data
+                     );
+
+void ethernet_wifi_cfg(client interface wifi_network_config_if wifi_cfg, server ethernet_cfg_if i_cfg);
+                     
 #endif // __XC__
 
 #endif // __wifi_h__

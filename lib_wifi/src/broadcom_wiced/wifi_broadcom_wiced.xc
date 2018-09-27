@@ -38,11 +38,17 @@ unsafe streaming chanend xcore_wwd_pbuf_external;
 unsafe client interface fs_basic_if i_fs_global;
 
 // Function prototype for xcore wrapper function found in xcore_wrappers.c
-size_t xcore_wifi_scan_networks();
+size_t xcore_wifi_scan_networks(void);
 unsigned xcore_wifi_join_network_at_index(size_t index, uint8_t security_key[],
                                           size_t key_length);
+unsigned xcore_wifi_leave_network(void);
 int xcore_wifi_get_network_index(const char * unsafe name);
 wwd_result_t xcore_wifi_get_radio_mac_address(wiced_mac_t * unsafe mac_address);
+unsigned xcore_wifi_set_radio_mac_address(wiced_mac_t mac_address);
+unsigned xcore_wifi_ready_to_transceive(void);
+unsigned xcore_wifi_start_ap(char * unsafe ssid);
+unsigned xcore_wifi_start_ap_wpa(char * unsafe ssid, uint8_t * unsafe wpa, unsigned length);
+unsigned xcore_wifi_stop_ap(void);
 
 unsafe void xcore_wiced_drive_power_line (uint32_t line_state) {
   wifi_spi_drive_cs_port_now(*p_wifi_bcm_wiced_spi, 2, line_state);
@@ -117,6 +123,8 @@ static int buffers_is_empty(buffers_t &buffers){
   return (buffers.head == buffers.tail);
 }
 
+#define MAX_SSID_LENGTH (256)
+
 // Needs to be unsafe due to input of pbuf_p from streaming channel
 [[combinable]]
 static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from name now?
@@ -128,6 +136,10 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
   buffers_t rx_buffers;
   buffers_init(rx_buffers);
 
+  // Initialise with invalid interface
+  int interface_mode = -1;
+  int radio_up = 0;
+
   while (1) {
     select {
       // WiFi HAL interface
@@ -138,40 +150,41 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
                                                   NULL);
         assert(result == WWD_SUCCESS && msg("WWD initialisation failed!"));
         debug_printf("WWD initialisation complete\n");
+        radio_up = 1;
         break;
 
-      case i_hal[int i].get_hardware_status():
+      case (radio_up) => i_hal[int i].get_hardware_status():
         break;
 
-      case i_hal[int i].get_chipset_power_mode():
+      case (radio_up) => i_hal[int i].get_chipset_power_mode():
         break;
 
-      case i_hal[int i].set_chipset_power_mode():
+      case (radio_up) => i_hal[int i].set_chipset_power_mode():
         break;
 
-      case i_hal[int i].get_radio_tx_power():
+      case (radio_up) => i_hal[int i].get_radio_tx_power():
         break;
 
-      case i_hal[int i].set_radio_tx_power():
+      case (radio_up) => i_hal[int i].set_radio_tx_power():
         break;
 
-      case i_hal[int i].get_radio_state():
+      case (radio_up) => i_hal[int i].get_radio_state():
         break;
 
-      case i_hal[int i].set_radio_state():
+      case (radio_up) => i_hal[int i].set_radio_state():
         break;
 
-      case i_hal[int i].set_antenna_mode():
+      case (radio_up) => i_hal[int i].set_antenna_mode():
         break;
 
-      case i_hal[int i].get_channel():
+      case (radio_up) => i_hal[int i].get_channel():
         break;
 
-      case i_hal[int i].set_channel():
+      case (radio_up) => i_hal[int i].set_channel():
         break;
 
       // WiFi network configuration interface
-      case i_conf[int i].get_mac_address(uint8_t mac_address[6]) -> wifi_res_t result:
+      case (radio_up) => i_conf[int i].get_mac_address(uint8_t mac_address[6]) -> wifi_res_t result:
         wiced_mac_t local_mac;
         unsafe {
           result = (wifi_res_t)xcore_wifi_get_radio_mac_address(&local_mac);
@@ -182,36 +195,45 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
                      mac_address[3], mac_address[4], mac_address[5]);
         break;
 
-      case i_conf[int i].set_mac_address():
+      case (radio_up) => i_conf[int i].set_mac_address(uint8_t mac_address[6]):
+        /*wiced_mac_t local_mac;
+        memcpy(&local_mac, mac_address, sizeof(uint8_t)*6);
+        xassert(interface_mode == -1);
+        xcore_wifi_set_radio_mac_address(local_mac);*/
         break;
 
-      case i_conf[int i].get_link_state() -> ethernet_link_state_t state:
-        state = ETHERNET_LINK_UP;
+      case (radio_up) => i_conf[int i].get_link_state() -> ethernet_link_state_t state:
+        if (xcore_wifi_ready_to_transceive()) {
+          state = ETHERNET_LINK_UP;
+        } else {
+          state = ETHERNET_LINK_DOWN;
+        }
         break;
 
-      case i_conf[int i].set_link_state(ethernet_link_state_t state):
+      case (radio_up) => i_conf[int i].set_link_state(ethernet_link_state_t state):
         break;
 
-      case i_conf[int i].set_networking_mode():
+      case (radio_up) => i_conf[int i].set_networking_mode():
         break;
 
-      case i_conf[int i].scan_for_networks() -> size_t num_networks:
+      case (radio_up) => i_conf[int i].scan_for_networks() -> size_t num_networks:
         debug_printf("Internal scan_for_networks\n");
         num_networks = xcore_wifi_scan_networks();
         break;
 
-      case i_conf[int i].join_network_by_index(size_t index,
+      case (radio_up) => i_conf[int i].join_network_by_index(size_t index,
                                       uint8_t security_key[key_length],
                                       size_t key_length) -> unsigned result:
-        debug_printf("join_network %d\n", index);
+        // debug_printf("join_network %d\n", index);
         xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
                msg("Length of security key exceeds WIFI_MAX_KEY_LENGTH"));
         uint8_t local_key[WIFI_MAX_KEY_LENGTH];
         memcpy(local_key, security_key, key_length);
         result = xcore_wifi_join_network_at_index(index, local_key, key_length);
+        interface_mode = result ? WWD_STA_INTERFACE : -1;
         break;
 
-      case i_conf[int i].join_network_by_name(char name[SSID_NAME_SIZE],
+      case (radio_up) => i_conf[int i].join_network_by_name(char name[SSID_NAME_SIZE],
                                       uint8_t security_key[key_length],
                                       size_t key_length) -> unsigned result:
         xassert(key_length <= WIFI_MAX_KEY_LENGTH &&
@@ -221,22 +243,59 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
         char local_name[SSID_NAME_SIZE];
         memcpy(local_name, name, SSID_NAME_SIZE);
-        debug_printf("join_network %s\n", local_name);
+        // debug_printf("join_network %s\n", local_name);
 
         int index = xcore_wifi_get_network_index(local_name);
         if (index != -1) {
           result = xcore_wifi_join_network_at_index(index, local_key, key_length);
+          interface_mode = result ? WWD_STA_INTERFACE : -1;
         } else {
           debug_printf("Invalid network name\n");
         }
         break;
 
-      case i_conf[int i].leave_network(size_t index):
+      case (radio_up) => i_conf[int i].leave_network(size_t index):
+        xassert(interface_mode == WWD_STA_INTERFACE);
+        xcore_wifi_leave_network();
+        interface_mode = -1;
+        break;
+
+      case (radio_up) => i_conf[int i].start_ap(char ssid[n], const unsigned n) -> unsigned result:
+        char ssid_tmp[MAX_SSID_LENGTH];
+        memcpy(ssid_tmp, ssid, sizeof(char)*n);
+        ssid_tmp[n] = '\0';
+
+        unsafe {
+          result = xcore_wifi_start_ap(ssid_tmp);
+        }
+
+        interface_mode = result ? WWD_AP_INTERFACE : -1;
+        break;
+
+      case (radio_up) => i_conf[int i].start_ap_wpa(char ssid[n], const unsigned n, char key[k], unsigned k) -> unsigned result:
+        char ssid_tmp[MAX_SSID_LENGTH];
+        char key_tmp[WIFI_MAX_KEY_LENGTH];
+        memcpy(ssid_tmp, ssid, sizeof(char)*n);
+        memcpy(key_tmp, key, sizeof(char)*k);
+        ssid_tmp[n] = '\0';
+
+        unsafe {
+          result = xcore_wifi_start_ap_wpa(ssid_tmp, key_tmp, k);
+        }
+
+        interface_mode = result ? WWD_AP_INTERFACE : -1;
+
+        break;
+
+      case (radio_up) => i_conf[int i].stop_ap(void) -> unsigned result:
+        xassert(interface_mode == WWD_AP_INTERFACE);
+        result = xcore_wifi_stop_ap();
+        interface_mode = -1;
         break;
 
       // TODO: WiFi network data interface
       case i_data.receive_packet() -> pbuf_p p:
-        debug_printf("Internal receive_packet\n");
+        // debug_printf("Internal receive_packet\n");
         p = buffers_take(rx_buffers);
         if (!buffers_is_empty(rx_buffers)) {
           // If there are still packets to be consumed then notify client again
@@ -246,14 +305,16 @@ static unsafe void wifi_broadcom_wiced_spi_internal( // TODO: remove spi from na
 
       case i_data.send_packet(pbuf_p p):
         // Queue the packet for the WIFI to send it
-        debug_printf("Internal send_packet\n");
         // Increment the reference count as LWIP assumes packets have to be
         // deleted, and so does the WIFI library
-        pbuf_ref(p);
-        wwd_network_send_ethernet_data(p, WWD_STA_INTERFACE);
+        if(interface_mode != -1) {
+          pbuf_ref(p);
+          /*xassert(interface_mode != -1);*/
+          wwd_network_send_ethernet_data(p, interface_mode);
+        }
         break;
 
-      case c_xcore_wwd_pbuf :> pbuf_p p:
+      case (radio_up) => c_xcore_wwd_pbuf :> pbuf_p p:
         debug_printf("Internal packet from WIFI\n");
         buffers_put(rx_buffers, p);
         i_data.packet_ready();
